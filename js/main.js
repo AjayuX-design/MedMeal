@@ -138,9 +138,25 @@
     var els = $$(".reveal");
     if (!("IntersectionObserver" in window)) { els.forEach(function (e) { e.classList.add("is-in"); }); return; }
     var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add("is-in"); io.unobserve(en.target); } });
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        var t = en.target;
+        t.classList.add("is-in"); io.unobserve(t);
+        setTimeout(function () { t.style.transitionDelay = ""; t.classList.add("is-done"); }, 1000);
+      });
     }, { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
-    els.forEach(function (e) { io.observe(e); });
+    els.forEach(function (e) {
+      var sib = Array.prototype.filter.call(e.parentNode.children, function (c) { return c.classList.contains("reveal"); });
+      if (sib.length > 1) e.style.transitionDelay = Math.min(sib.indexOf(e), 4) * 80 + "ms";
+      io.observe(e);
+    });
+    var steps = $$(".hiw-list li");
+    if (steps.length) {
+      var so = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add("is-active"); so.unobserve(en.target); } });
+      }, { rootMargin: "0px 0px -35% 0px", threshold: 0.2 });
+      steps.forEach(function (s) { so.observe(s); });
+    }
   }
 
   /* Forms */

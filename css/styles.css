@@ -371,3 +371,32 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 .js .reveal.is-in { opacity: 1; transform: none; }
 ::placeholder { color: #5A5E5C; opacity: 1; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition-duration: .01ms !important; } .js .reveal { opacity: 1; transform: none; } }
+
+/* Phones: smaller type, tighter spacing, one Book now (the bottom bar has it) */
+@media (max-width: 599px) {
+  .hero-media { height: 240px; }
+  h2 { font-size: 28px; line-height: 36px; }
+  .lead { font-size: 16px; line-height: 24px; }
+  .hero .lead { font-size: 20px; line-height: 28px; }
+  .section { padding-block: 48px; }
+  .head { margin-bottom: 32px; }
+  .head--center { margin-inline: 0; text-align: left; }
+  .eyebrow { letter-spacing: .06em; }
+  .hero .btn-row .btn, .closing .btn-row .btn { width: 100%; }
+  .fgrid, .plans { gap: 16px; }
+  .fcard-img svg, .fcard-img img { aspect-ratio: 16 / 10; }
+  .fcard-body { padding: 20px; }
+  .plan { padding: 24px; }
+  .plan .chip { top: 28px; right: 24px; }
+  .price { font-size: 28px; line-height: 36px; }
+  .price--text { font-size: 20px; line-height: 28px; }
+  .hiw-list li { padding: 20px 0; }
+  .faq summary { font-size: 16px; line-height: 24px; }
+  .closing { padding: 40px 20px 32px; }
+  .closing-media { height: 240px; margin-top: 24px; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px 16px; }
+  .footer-grid > :first-child, .footer-grid > :last-child { grid-column: 1 / -1; }
+  .site-footer { padding-block: 48px 24px; }
+  .footer-note { margin-top: 32px; }
+}
+@media (max-width: 899px) { .header-cta { display: none; } }

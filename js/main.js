@@ -83,8 +83,8 @@
   }
 
   var FEED_LINKS = [
-    ["Neuro feeds", "neuro-feeds"], ["Oncology feeds", "oncology-feeds"], ["Gastro feeds", "gastro-feeds"], ["Renal feeds", "renal-feeds"],
-    ["Cardiac feeds", "cardiac-feeds"], ["Surgical recovery feeds", "surgical-recovery-feeds"], ["Semi-solid feeds", "semi-solid-feeds"], ["Therapeutic weaning feeds", "therapeutic-weaning-feeds"]
+    ["Neuro", "neuro-feeds"], ["Oncology", "oncology-feeds"], ["Gastro", "gastro-feeds"], ["Renal", "renal-feeds"],
+    ["Cardiac", "cardiac-feeds"], ["Surgical recovery", "surgical-recovery-feeds"], ["Semi-solid", "semi-solid-feeds"], ["Therapeutic weaning", "therapeutic-weaning-feeds"]
   ];
 
   function footerHTML() {
@@ -92,7 +92,7 @@
     return '<footer class="site-footer"><div class="container"><div class="footer-grid">' +
       '<div><a class="brand" href="index.html">MedMeal</a><p class="muted footer-about">Tube feeding nutrition for patients in Vijayawada.</p></div>' +
       '<div><h2>Explore</h2><ul>' + links + "</ul></div>" +
-      '<div><h2>Feeds</h2><ul>' + FEED_LINKS.map(function (f) { return '<li><a href="' + f[1] + '.html">' + f[0] + "</a></li>"; }).join("") + "</ul></div>" +
+      '<div><h2>Feeds</h2><ul>' + FEED_LINKS.map(function (f) { return '<li><a href="' + f[1] + '.html">' + f[0] + '<span class="ft-sfx"> feeds</span></a></li>'; }).join("") + "</ul></div>" +
       '<div><h2>Contact</h2><ul>' +
       '<li><a data-call href="#">8984463777</a></li><li><a href="tel:+91' + SECOND_LINE + '">' + SECOND_LINE + '</a></li>' +
       '<li><a href="mailto:' + EMAIL + '">' + EMAIL + '</a></li><li>Vijayawada, Andhra Pradesh</li></ul></div></div>' +

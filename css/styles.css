@@ -139,11 +139,11 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .fcard-body { display: flex; flex: 1; flex-direction: column; padding: 24px; }
 .fcard h3 { margin-bottom: 8px; }
 .fcard p { color: var(--muted); margin-bottom: 16px; }
-.fcard-cta { display: inline-flex; align-items: center; gap: 8px; margin-top: auto; align-self: flex-start; font: 600 16px/24px var(--text); color: var(--green-text); text-decoration: none; }
+.fcard-cta { display: inline-flex; align-items: center; gap: 8px; margin-top: auto; align-self: flex-start; font: 600 16px/24px var(--text); color: var(--muted); text-decoration: none; transition: color .2s var(--ease); }
 .fcard-cta i { display: inline-flex; transition: transform .2s var(--ease); }
 .fcard-cta::after { content: ""; position: absolute; inset: 0; }
 .fcard-cta:focus-visible { outline: none; }
-.fcard:hover .fcard-cta { text-decoration: underline; text-underline-offset: 4px; }
+.fcard:hover .fcard-cta, .fcard:focus-within .fcard-cta { color: var(--green-text); text-decoration: underline; text-underline-offset: 4px; }
 .fcard:hover .fcard-cta i { transform: translateX(4px); }
 @media (prefers-reduced-motion: reduce) { .fcard-cta i { transition: none; } }
 .feed-hero { display: grid; gap: 32px; align-items: center; }

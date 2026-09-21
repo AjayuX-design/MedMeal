@@ -76,7 +76,7 @@
       '<header class="site-header"><div class="container"><div class="pill">' +
       '<a class="brand" href="index.html" aria-label="MedMeal home">MedMeal</a>' +
       '<div class="header-right"><nav class="nav-desktop" aria-label="Main"><ul>' + desk + "</ul></nav>" +
-      '<a class="btn btn--primary header-cta" href="book.html">Book now</a>' +
+      '<a class="btn btn--primary header-cta" href="book.html">Book a call</a>' +
       '<button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav-mobile" aria-label="Open menu">' + icon("menu", "icon-open") + icon("close", "icon-close") + "</button></div>" +
       "</div></div></header>" +
       '<nav class="nav-mobile" id="nav-mobile" aria-label="Main mobile">' + mob + '<a class="btn btn--primary btn--lg" href="book.html">Book a consultation</a></nav>';

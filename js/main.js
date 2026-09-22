@@ -59,7 +59,6 @@
   var NAV = [
     ["Solutions", "solutions.html"],
     ["RT and PEG", "rt-peg-feeding.html"],
-    ["How it works", "index.html#how-it-works"],
     ["Hospitals", "for-hospitals.html"],
     ["About", "about.html"],
     ["Contact", "contact.html"]

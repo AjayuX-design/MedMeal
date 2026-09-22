@@ -129,9 +129,27 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 @media (min-width: 720px) { .points { grid-template-columns: repeat(3, 1fr); gap: 40px; } }
 
 /* Feed cards */
+.fgroup + .fgroup { margin-top: 56px; }
+.fgroup .muted { margin-bottom: 24px; }
+.fpanel { background: var(--mint); border-radius: 24px; padding: 32px; }
+.fpanel .muted { color: var(--green-text); }
+.fpanel .fcard { border-color: transparent; }
 .fgrid { display: grid; gap: 24px; }
 @media (min-width: 600px) { .fgrid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1000px) { .fgrid { grid-template-columns: repeat(4, 1fr); } }
+.fgrid--3 { max-width: 760px; }
+@media (min-width: 720px) { .fgrid--3 { grid-template-columns: repeat(3, 1fr); max-width: none; } }
+
+/* Solutions closing CTA: stand out from the page, one clear action */
+.fcta { position: relative; overflow: hidden; background: var(--mint); border-radius: 28px; padding: 48px 24px 40px; }
+.fcta-copy { position: relative; z-index: 1; }
+.fcta h2 { margin-bottom: 16px; }
+.fcta .lead { max-width: 32rem; margin: 0; color: var(--muted); }
+.fcta-tip { margin-top: 32px; max-width: 32rem; padding-left: 20px; border-left: 4px solid var(--apricot); }
+.fcta-tip p { margin: 0; font-size: 20px; line-height: 28px; color: var(--body); }
+.fcta-tip strong { color: var(--ink); }
+@media (min-width: 900px) { .fcta { padding: 64px; } }
+
 .fcard { position: relative; display: flex; flex-direction: column; overflow: hidden; background: #fff; border: 1px solid var(--line); border-radius: 24px; transition: border-color .2s, box-shadow .2s; }
 .fcard:hover, .fcard:focus-within { border-color: var(--green); box-shadow: 0 8px 24px rgba(30, 42, 36, .08); }
 .fcard:focus-within { outline: 3px solid var(--green); outline-offset: 4px; }

@@ -140,6 +140,26 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .fgrid--3 { max-width: 760px; }
 @media (min-width: 720px) { .fgrid--3 { grid-template-columns: repeat(3, 1fr); max-width: none; } }
 
+.img-placeholder { aspect-ratio: 4 / 3; margin-bottom: 24px; border-radius: 24px; border: 2px dashed var(--line); background: var(--w3); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--muted); }
+.img-placeholder--wide { aspect-ratio: 21 / 9; }
+.rtpeg-media { border-radius: 24px; overflow: hidden; box-shadow: 0 8px 24px rgba(30, 42, 36, .08); }
+.rtpeg-media img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+@media (min-width: 860px) { .rtpeg-media { height: 100%; } .rtpeg-media img { height: 100%; aspect-ratio: auto; } }
+.rt-steps { list-style: none; margin: 0; padding: 0; }
+.rt-steps li { display: flex; gap: 20px; padding: 20px 0; border-top: 1px solid var(--line); }
+.rt-steps li:last-child { border-bottom: 1px solid var(--line); }
+.rt-steps .n { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--mint); color: var(--green-text); display: grid; place-items: center; font: 700 16px/24px var(--head); }
+.rt-steps p { margin: 0; }
+.rt-steps strong { color: var(--ink); }
+.info-cards { display: grid; gap: 24px; }
+@media (min-width: 700px) { .info-cards { grid-template-columns: repeat(3, 1fr); } }
+.info-card { border: 1px solid var(--line); border-radius: 24px; padding: 24px; background: #fff; }
+.info-card .icon-circle { width: 48px; height: 48px; border-radius: 50%; background: var(--mint); color: var(--green-text); display: grid; place-items: center; margin-bottom: 16px; }
+.info-card h3 { margin: 0 0 8px; }
+.info-card p { margin: 0; color: var(--muted); }
+.img-placeholder .icon { width: 32px; height: 32px; }
+.img-placeholder span { font: 500 16px/24px var(--text); }
+
 /* Solutions closing CTA: stand out from the page, one clear action */
 .fcta { position: relative; overflow: hidden; background: var(--mint); border-radius: 28px; padding: 48px 24px 40px; }
 .fcta-copy { position: relative; z-index: 1; }
@@ -277,6 +297,8 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .checks li { display: flex; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--line); }
 .checks li:first-child { border-top: 1px solid var(--line); }
 .checks .icon { color: var(--green-text); margin-top: 2px; }
+.checks p { margin: 0; }
+.checks strong { color: var(--ink); }
 .table { width: 100%; border-collapse: collapse; }
 .table th, .table td { text-align: left; padding: 16px 16px 16px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
 .table th { color: var(--ink); font: 600 16px/24px var(--text); }

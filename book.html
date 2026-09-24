@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Talk to a dietitian | MedMeal</title>
+<meta name="description" content="Book a video or phone consultation with a MedMeal dietitian.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script>document.documentElement.classList.add("js")</script>
+<script src="js/main.js" defer></script>
+</head>
+<body>
+<div id="site-header"></div>
+<main id="main">
+
+<section class="page-head"><div class="container">
+  <p class="crumbs"><a href="index.html">Home</a> / Talk to a dietitian</p>
+  <h1>Talk to a dietitian</h1>
+  <p class="lead">Three short steps. Add the patient's reports here, so you do not need to send them separately.</p>
+</div></section>
+<section class="section section--tight"><div class="container form-layout">
+  <div id="form-top">
+    <div class="form-card" id="form-wrap">
+      <p id="enquiry-tag" class="chip" hidden></p>
+      <ol class="progress" aria-hidden="true"><li class="is-on"></li><li></li><li></li></ol>
+      <p class="progress-label" id="progress-label" aria-live="polite">Step 1 of 3: Consultation</p>
+      <form id="booking-form" novalidate>
+        <fieldset data-step="1">
+          <legend>How would you like to talk?</legend>
+          <p class="help">You can change this later with our team.</p>
+          <div class="field" id="consult-group" data-group>
+            <div class="choices" role="radiogroup" aria-label="Consultation type">
+              <label class="choice"><input type="radio" name="consult" value="video"><span class="choice-box"><strong>Video call</strong><span class="fee">&#8377;799</span><small>Meet our dietitian online.</small></span></label>
+              <label class="choice"><input type="radio" name="consult" value="phone"><span class="choice-box"><strong>Phone call</strong><span class="fee">&#8377;499</span><small>Talk to our dietitian by phone.</small></span></label>
+              <label class="choice"><input type="radio" name="consult" value="unsure"><span class="choice-box"><strong>Not sure yet</strong><span class="fee fee--sm">We will help</span><small>Our team will call you.</small></span></label>
+            </div>
+          </div>
+          <div class="actions"><button class="btn btn--primary btn--lg" type="button" data-next>Continue</button></div>
+        </fieldset>
+        <fieldset data-step="2" hidden>
+          <legend>About the patient</legend>
+          <p class="help">Fields marked <span class="req">*</span> are required.</p>
+          <div class="field-row">
+            <div class="field"><label for="patient">Patient's name <span class="req">*</span></label><input id="patient" name="patient" type="text" required data-label="Patient's name"></div>
+            <div class="field"><label for="age">Patient's age <span class="req">*</span></label><input id="age" name="age" type="number" inputmode="numeric" min="0" max="120" required data-label="Patient's age"></div>
+          </div>
+          <div class="field"><label for="route">How is the patient fed? <span class="req">*</span></label><select id="route" name="route" required><option value="">Choose one</option><option>RT / Ryles tube</option><option>PEG tube</option><option>Not sure</option></select></div>
+          <div class="field-row">
+            <div class="field"><label for="contact-name">Your name <span class="req">*</span></label><input id="contact-name" name="contact-name" type="text" required data-label="Your name" autocomplete="name"></div>
+            <div class="field"><label for="phone">Your mobile number <span class="req">*</span></label><input id="phone" name="phone" type="tel" inputmode="tel" required data-label="Mobile number" autocomplete="tel" placeholder="9876543210"></div>
+          </div>
+          <div class="actions"><button class="btn btn--outline btn--lg" type="button" data-back>Back</button><button class="btn btn--primary btn--lg" type="button" data-next>Continue</button></div>
+        </fieldset>
+        <fieldset data-step="3" hidden>
+          <legend>Reports and send</legend>
+          <p class="help">Optional, but it helps our dietitian prepare.</p>
+          <div class="field">
+            <span class="label" id="upload-label">Medical reports or prescription</span>
+            <label class="upload" for="reports"><i data-i="upload"></i><strong>Choose files</strong><small class="muted">PDF, JPG or PNG</small><input id="reports" type="file" name="reports" multiple accept=".pdf,.jpg,.jpeg,.png" aria-labelledby="upload-label"></label>
+            <p class="file-names" id="file-names" aria-live="polite"></p>
+          </div>
+          <div class="field"><label for="notes">Anything else? <span class="opt">(optional)</span></label><textarea id="notes" name="notes"></textarea></div>
+          <div class="field"><div class="check"><input id="consent" name="consent" type="checkbox" required data-error="Please tick this box so we can contact you."><label for="consent">I agree that MedMeal may contact me about this request.</label></div></div>
+          <div class="actions"><button class="btn btn--outline btn--lg" type="button" data-back>Back</button><button class="btn btn--primary btn--lg" type="submit">Send request</button></div>
+        </fieldset>
+      </form>
+    </div>
+    <div class="form-card success" id="thanks" hidden>
+      <div class="tick"><i data-i="check"></i></div>
+      <h2>Thank you, <span id="thanks-name"></span></h2>
+      <p class="lead">We have your request. Our team will contact you on the number you shared.</p>
+      <div class="summary" id="summary"></div>
+      <div class="btn-row btn-row--center"><a class="btn btn--primary" href="index.html">Back to home</a><a class="text-link" data-wa href="#"><i data-i="whatsapp"></i>WhatsApp us</a></div>
+    </div>
+  </div>
+  <aside class="aside sticky">
+    <h3>What happens next</h3>
+    <ol><li>Our team reviews the patient's details.</li><li>We contact you to confirm.</li><li>You get a plan built around the patient.</li></ol>
+    <p class="fine mb-6"><strong style="color:var(--ink)">Fee:</strong> <span id="fee-note">Choose a consultation type</span></p>
+    <div class="stack"><a class="btn btn--primary" data-call href="#">Call us</a><a class="btn btn--outline" data-wa href="#"><i data-i="whatsapp"></i>WhatsApp us</a></div>
+  </aside>
+</div></section>
+
+</main>
+<div id="site-footer"></div>
+</body>
+</html>

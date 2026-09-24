@@ -16,6 +16,7 @@
   var ICONS = {
     phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
     chat: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
+    whatsapp: '<path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9l-5.05.9"/><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/>',
     arrow: '<path d="M5 12h14M12 5l7 7-7 7"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
     menu: '<path d="M4 12h16M4 6h16M4 18h16"/>',
@@ -96,7 +97,7 @@
       '<li><a data-call href="#">8984463777</a></li><li><a href="tel:+91' + SECOND_LINE + '">' + SECOND_LINE + '</a></li>' +
       '<li><a href="mailto:' + EMAIL + '">' + EMAIL + '</a></li><li>Vijayawada, Andhra Pradesh</li></ul></div></div>' +
       '<div class="footer-note"><p>Feed selection is guided by a dietitian and based on each patient\'s clinical and nutritional needs. Information on this site does not replace medical advice.</p><p>&copy; <span id="year"></span> MedMeal.</p></div></div></footer>' +
-      '<div class="mobile-bar" role="group" aria-label="Quick contact"><a class="btn btn--outline" data-call href="#">Call</a><a class="btn btn--outline" data-wa href="#">WhatsApp</a><a class="btn btn--primary" href="book.html">Book now</a></div>';
+      '<div class="mobile-bar" role="group" aria-label="Quick contact"><a class="btn btn--outline" data-call href="#">Call</a><a class="btn btn--outline" data-wa href="#"><i data-i="whatsapp"></i>WhatsApp</a><a class="btn btn--primary" href="book.html">Book now</a></div>';
   }
 
   function mount() {

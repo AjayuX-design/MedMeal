@@ -570,3 +570,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible { outline: non
 .mobile-bar .btn .icon { width: 16px; height: 16px; }
 @media (max-width: 359px) { .mobile-bar .btn .icon { display: none; } }
 .mobile-bar { padding-inline: 8px; }
+a[data-wa] { display: inline-flex; align-items: center; gap: 8px; }
+.closing-links { align-items: center; }
+.closing-links a { display: inline-flex; align-items: center; min-height: 24px; }
+.closing-links li { display: flex; }
+.closing-links { flex-wrap: wrap; }
+@media (max-width: 380px) { .closing-links a[data-wa] .icon { display: none; } }
+@media (max-width: 340px) { .closing-links { gap: 8px 4px; } }
+@media (max-width: 599px) { .fcta .btn-row { gap: 8px 24px; } .fcta .btn-row .btn { width: 100%; } }
+@media (max-width: 599px) { .fcta .deco-l { left: -40px; bottom: -36px; } }

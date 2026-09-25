@@ -5,5 +5,5 @@ gastro: Aakash Dhage
 renal: Robina Weermeijer
 cardiac: Marek Studzinski
 surgical: Cesar Badilla Miranda
-semisolid: Megan Bucknall
-weaning: Erik Mclean
+semisolid: MedMeal (own image)
+weaning: MedMeal (own image)

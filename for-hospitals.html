@@ -1,10 +1,17 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-IN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>For hospitals | MedMeal</title>
-<meta name="description" content="Nutrition support for hospitals, rehabilitation centres and healthcare teams.">
+<title>Tube Feeding Food Supplier for Hospitals in Vijayawada | MedMeal</title>
+<meta name="description" content="MedMeal supplies dietitian-planned tube feeding food to hospitals, rehabilitation centres and care teams in Vijayawada. RT and PEG feeds, FSSAI licensed. Send an enquiry.">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_IN">
+<meta property="og:site_name" content="MedMeal">
+<meta property="og:title" content="Tube Feeding Food Supplier for Hospitals in Vijayawada | MedMeal">
+<meta property="og:description" content="MedMeal supplies dietitian-planned tube feeding food to hospitals, rehabilitation centres and care teams in Vijayawada. RT and PEG feeds, FSSAI licensed. Send an enquiry.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "MedicalBusiness", "name": "MedMeal", "description": "Tube feeding nutrition for RT and PEG patients, planned with a dietitian and delivered to hospitals, care centres and homes in Vijayawada.", "email": "info@medmeal.in", "telephone": "+91-8984463777", "address": {"@type": "PostalAddress", "streetAddress": "D.No 40-1-52C, MG Road, Benz Circle", "addressLocality": "Vijayawada", "addressRegion": "Andhra Pradesh", "postalCode": "520010", "addressCountry": "IN"}, "areaServed": {"@type": "City", "name": "Vijayawada"}}, {"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Which hospitals and care centres does MedMeal work with?", "acceptedAnswer": {"@type": "Answer", "text": "We serve 9 hospitals and care centres in and around Vijayawada. Send us an enquiry and we will talk through what your team needs."}}, {"@type": "Question", "name": "What tube feeds can you supply?", "acceptedAnswer": {"@type": "Answer", "text": "RT (Ryles) and PEG feeds, feeds for neuro, oncology, gastro, renal and cardiac conditions and surgical recovery, plus semi-solid and therapeutic weaning feeds."}}, {"@type": "Question", "name": "Who plans the feeds?", "acceptedAnswer": {"@type": "Answer", "text": "Our dietitians plan each feed around the patient's condition and needs."}}, {"@type": "Question", "name": "Can you deliver to patients at home after discharge?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, within our service areas. Call or message us to check the address."}}, {"@type": "Question", "name": "Is MedMeal FSSAI licensed?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. Our FSSAI licence number is 10126020000188, valid until 10 March 2027."}}]}]}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -16,40 +23,74 @@
 <div id="site-header"></div>
 <main id="main">
 
-<section class="page-head"><div class="container">
-  <p class="crumbs"><a href="index.html">Home</a> / For hospitals</p>
-  <h1>For hospitals and care teams</h1>
-  <p class="lead">Structured nutrition support for patients who need tube feeding, from preparation to delivery.</p>
-</div></section>
-<section class="section section--tight"><div class="container form-layout">
-  <div>
-    <ul class="checks mb-10">
-      <li><i data-i="check"></i>RT/Ryles feeding support</li>
-      <li><i data-i="check"></i>PEG feeding support</li>
-      <li><i data-i="check"></i>Specialized nutrition categories</li>
-      <li><i data-i="check"></i>Dietitian-guided planning</li>
-      <li><i data-i="check"></i>Homecare support</li>
-      <li><i data-i="check"></i>Delivery coordination</li>
+<section class="page-head"><div class="container hosp-hero">
+  <div class="hosp-text">
+    <p class="crumbs"><a href="index.html">Home</a> / For hospitals</p>
+    <h1>Tube feeding food supplier for hospitals in Vijayawada</h1>
+    <p class="lead">Dietitian-planned feeds for hospitals, rehabilitation centres and care teams, delivered to the ward and to the patient's home after discharge.</p>
+    <ul class="fact-chips">
+      <li><i data-i="building"></i>9 hospitals and care centres served</li>
+      <li><i data-i="shield"></i>FSSAI licensed</li>
     </ul>
-    <div class="form-card">
-      <h2 class="h2--sm">Partnership enquiry</h2>
-      <p class="help">Fields marked <span class="req">*</span> are required.</p>
+  </div>
+  <div class="form-card" id="enquiry">
+      <div class="form-head"><span class="icon-circle"><i data-i="heart"></i></span><div><h2 class="h2--sm">Partnership enquiry</h2></div></div>
       <form data-simple novalidate>
+        <p class="form-req">Fields marked <span class="req">*</span> are mandatory.</p>
         <div class="field-row">
-          <div class="field"><label for="org">Organisation <span class="req">*</span></label><input id="org" name="org" type="text" required data-label="Organisation" autocomplete="organization"></div>
-          <div class="field"><label for="ftype">Type <span class="req">*</span></label><select id="ftype" name="ftype" required><option value="">Choose one</option><option>Hospital</option><option>Rehabilitation centre</option><option>Other healthcare team</option></select></div>
+          <div class="field"><label for="org">Organisation <span class="req">*</span></label><input id="org" name="org" type="text" required data-label="Organisation" data-error="Enter organisation name." autocomplete="organization"></div>
+          <div class="field"><label for="ftype">Type <span class="req">*</span></label><select id="ftype" name="ftype" required data-error="Choose a type."><option value="">Choose one</option><option>Hospital</option><option>Rehabilitation centre</option><option>Other healthcare team</option></select></div>
         </div>
         <div class="field-row">
-          <div class="field"><label for="hname">Your name <span class="req">*</span></label><input id="hname" name="hname" type="text" required data-label="Your name" autocomplete="name"></div>
-          <div class="field"><label for="hphone">Mobile number <span class="req">*</span></label><input id="hphone" name="hphone" type="tel" inputmode="tel" required data-label="Mobile number" autocomplete="tel" placeholder="9876543210"></div>
+          <div class="field"><label for="hname">Your name <span class="req">*</span></label><input id="hname" name="hname" type="text" required data-label="Your name" data-error="Enter your name." autocomplete="name"></div>
+          <div class="field"><label for="hphone">Mobile number <span class="req">*</span></label><input id="hphone" name="hphone" type="tel" inputmode="tel" required data-label="Mobile number" data-error="Enter mobile number." autocomplete="tel" placeholder="9876543210"></div>
         </div>
-        <div class="field"><label for="hmsg">How can we help? <span class="opt">(optional)</span></label><textarea id="hmsg" name="hmsg"></textarea></div>
-        <button class="btn btn--primary btn--lg" type="submit">Send enquiry</button>
+        <div class="field field--grow"><label for="hmsg">How can we help? <span class="opt">(optional)</span></label><textarea id="hmsg" name="hmsg"></textarea></div>
+        <button class="btn btn--primary btn--lg btn--block" type="submit">Send enquiry</button>
+        <p class="form-note"><span>Prefer to talk first?</span><a class="text-link" data-call href="#"><i data-i="phone"></i>Call Us</a><a class="text-link" data-wa href="#"><i data-i="whatsapp"></i>WhatsApp Us</a></p>
         <div class="inline-success" role="status" tabindex="-1"><i data-i="check"></i><span>Thank you. Our team will get in touch.</span></div>
       </form>
     </div>
+    <div class="lab-banner"><img src="img/medmeal-nurse-tube-feeding-patient.jpg" width="1600" height="981" decoding="async" alt="A nurse pouring a MedMeal feed into a syringe to give tube feeding to a patient in a hospital bed, with more MedMeal cups on a tray beside her"></div>
+</div></section>
+<section class="section section--soft"><div class="container">
+  <div class="head"><h2>What we supply</h2><p class="lead">Feeds for the patients on your wards, whatever the tube or the condition.</p></div>
+  <div class="info-cards info-cards--4">
+    <div class="info-card"><div class="icon-circle"><i data-i="drop"></i></div><h3>RT (Ryles) feeds</h3><p>Complete liquid feeds for patients fed through a nasogastric tube.</p></div>
+    <div class="info-card"><div class="icon-circle"><i data-i="pot"></i></div><h3>PEG feeds</h3><p>Dietitian-planned feeds for patients fed through a PEG tube.</p></div>
+    <div class="info-card"><div class="icon-circle"><i data-i="heart"></i></div><h3>Feeds by condition</h3><p>Neuro, oncology, gastro, renal, cardiac and surgical recovery feeds.</p></div>
+    <div class="info-card"><div class="icon-circle"><i data-i="utensils"></i></div><h3>Semi-solid and weaning</h3><p>Thicker feeds, and feeds that help patients move back to eating by mouth.</p></div>
   </div>
-  <aside class="aside sticky"><h3>Prefer to talk first?</h3><p>Reach the MedMeal team directly.</p><div class="stack"><a class="btn btn--primary" data-call href="#">Call Us</a><a class="btn btn--outline" data-wa href="#"><i data-i="whatsapp"></i>WhatsApp Us</a></div></aside>
+  <p class="story-links"><a href="solutions.html">See all nutrition solutions</a>, or read <a href="rt-peg-feeding.html">how RT and PEG feeding works</a>.</p>
+</div></section>
+<section class="section"><div class="container">
+  <div class="head"><h2>How it works with your team</h2></div>
+  <div class="chapters chapters--4">
+    <div class="chapter"><p class="chapter-n">01</p><h3>Tell us about your patients</h3><p>Share how many patients, their tube type and their medical reports.</p></div>
+    <div class="chapter"><p class="chapter-n">02</p><h3>A dietitian plans</h3><p>Our dietitians plan each feed around the patient's condition.</p></div>
+    <div class="chapter"><p class="chapter-n">03</p><h3>We prepare</h3><p>Feeds are made in our Nutrition Lab and packed in disposable, biodegradable cups.</p></div>
+    <div class="chapter"><p class="chapter-n">04</p><h3>We deliver</h3><p>To your ward, and to the patient's home if feeding continues after discharge.</p></div>
+  </div>
+</div></section>
+<section class="section section--soft"><div class="container">
+  <div class="head head--center"><h2>Questions from hospitals</h2></div>
+  <div class="faq">
+    <details><summary>Which hospitals and care centres does MedMeal work with? <i data-i="down"></i></summary><div class="a"><p>We serve 9 hospitals and care centres in and around Vijayawada. Send us an enquiry and we will talk through what your team needs.</p></div></details>
+    <details><summary>What tube feeds can you supply? <i data-i="down"></i></summary><div class="a"><p>RT (Ryles) and PEG feeds, feeds for neuro, oncology, gastro, renal and cardiac conditions and surgical recovery, plus semi-solid and therapeutic weaning feeds.</p></div></details>
+    <details><summary>Who plans the feeds? <i data-i="down"></i></summary><div class="a"><p>Our dietitians plan each feed around the patient's condition and needs.</p></div></details>
+    <details><summary>Can you deliver to patients at home after discharge? <i data-i="down"></i></summary><div class="a"><p>Yes, within our service areas. Call or message us to check the address.</p></div></details>
+    <details><summary>Is MedMeal FSSAI licensed? <i data-i="down"></i></summary><div class="a"><p>Yes. Our FSSAI licence number is 10126020000188, valid until 10 March 2027.</p></div></details>
+  </div>
+</div></section>
+<section class="section pt-0"><div class="container">
+  <div class="fcta">
+    <svg class="deco deco-l" viewBox="0 0 160 160" aria-hidden="true" focusable="false"><g fill="#2A8557" fill-opacity=".14" transform="translate(20 130) rotate(-50)"><path d="M0 0 C26 -34 78 -34 104 0 C78 34 26 34 0 0Z"/><path d="M8 0H96" stroke="#fff" stroke-opacity=".35" stroke-width="2" fill="none"/></g><g fill="#F6B77A" fill-opacity=".35" transform="translate(30 150) rotate(-15) scale(.7)"><path d="M0 0 C26 -34 78 -34 104 0 C78 34 26 34 0 0Z"/><path d="M8 0H96" stroke="#fff" stroke-opacity=".35" stroke-width="2" fill="none"/></g></svg><svg class="deco deco-r" viewBox="0 0 160 160" aria-hidden="true" focusable="false"><g fill="#2A8557" fill-opacity=".14" transform="translate(140 30) rotate(130)"><path d="M0 0 C26 -34 78 -34 104 0 C78 34 26 34 0 0Z"/><path d="M8 0H96" stroke="#fff" stroke-opacity=".35" stroke-width="2" fill="none"/></g><g fill="#F6B77A" fill-opacity=".35" transform="translate(130 10) rotate(165) scale(.7)"><path d="M0 0 C26 -34 78 -34 104 0 C78 34 26 34 0 0Z"/><path d="M8 0H96" stroke="#fff" stroke-opacity=".35" stroke-width="2" fill="none"/></g></svg>
+    <div class="fcta-copy">
+      <h2>Ready to talk to our team?</h2>
+      <p class="lead">Send us an enquiry, or reach us directly. A dietitian will get back to you.</p>
+      <div class="btn-row mt-8"><a class="btn btn--primary btn--lg" href="#enquiry">Send an enquiry</a><a class="text-link" data-call href="#"><i data-i="phone"></i>Call Us</a><a class="text-link" data-wa href="#"><i data-i="whatsapp"></i>WhatsApp Us</a></div>
+    </div>
+  </div>
 </div></section>
 
 </main>

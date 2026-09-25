@@ -184,12 +184,12 @@
     var v = (f.value || "").trim();
     var label = f.getAttribute("data-label") || "This field";
     if (f.type === "checkbox") return setError(f, f.required && !f.checked ? (f.getAttribute("data-error") || "Please tick this box to continue.") : "");
-    if (f.required && !v) return setError(f, f.tagName === "SELECT" ? "Please choose an option." : label + " is required.");
+    if (f.required && !v) return setError(f, f.getAttribute("data-error") || (f.tagName === "SELECT" ? "Please choose an option." : label + " is required."));
     if (v && f.type === "tel") {
       var d = v.replace(/[\s-]/g, "");
-      if (!/^(\+?91)?[6-9]\d{9}$/.test(d)) return setError(f, "Enter a 10 digit mobile number, for example 9876543210.");
+      if (!/^(\+?91)?[6-9]\d{9}$/.test(d)) return setError(f, "Enter a 10 digit mobile number.");
     }
-    if (v && f.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return setError(f, "Enter an email address like name@example.com.");
+    if (v && f.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return setError(f, "Enter a valid email address.");
     if (v && f.type === "number") {
       var n = Number(v);
       if (isNaN(n) || (f.min && n < Number(f.min)) || (f.max && n > Number(f.max))) return setError(f, "Enter an age between " + f.min + " and " + f.max + ".");

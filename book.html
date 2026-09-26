@@ -19,35 +19,42 @@
 <section class="page-head"><div class="container">
   <p class="crumbs"><a href="index.html">Home</a> / Talk to a dietitian</p>
   <h1>Talk to a dietitian</h1>
-  <p class="lead">Three short steps. Add the patient's reports here, so you do not need to send them separately.</p>
+  <p class="lead">Keep the patient's name, age, how they are fed and any reports ready. It takes about 2 minutes.</p>
 </div></section>
 <section class="section section--tight"><div class="container form-layout">
   <div id="form-top">
-    <div class="form-card" id="form-wrap">
+    <div class="form-card book-card" id="form-wrap">
       <p id="enquiry-tag" class="chip" hidden></p>
-      <ol class="progress" aria-hidden="true"><li class="is-on"></li><li></li><li></li></ol>
-      <p class="progress-label" id="progress-label" aria-live="polite">Step 1 of 3: Consultation</p>
+      <ol class="stepper" aria-label="Booking steps">
+        <li class="is-current" aria-current="step"><span class="step-dot"><span class="step-n">1</span><i data-i="check"></i></span><span class="step-name">Call type</span></li>
+        <li><span class="step-dot"><span class="step-n">2</span><i data-i="check"></i></span><span class="step-name">Patient</span></li>
+        <li><span class="step-dot"><span class="step-n">3</span><i data-i="check"></i></span><span class="step-name">Reports</span></li>
+      </ol>
+      <p class="sr-only" id="progress-label" aria-live="polite">Step 1 of 3: Consultation</p>
       <form id="booking-form" novalidate>
         <fieldset data-step="1">
           <legend>How would you like to talk?</legend>
-          <p class="help">You can change this later with our team.</p>
+          <div class="need"><p class="need-title">What you need for this step</p><ul><li><i data-i="check"></i>Choose a video call, a phone call, or "Not sure yet". You can change this later with our team.</li></ul></div>
           <div class="field" id="consult-group" data-group>
             <div class="choices" role="radiogroup" aria-label="Consultation type">
-              <label class="choice"><input type="radio" name="consult" value="video"><span class="choice-box"><strong>Video call</strong><span class="fee">&#8377;799</span><small>Meet our dietitian online.</small></span></label>
-              <label class="choice"><input type="radio" name="consult" value="phone"><span class="choice-box"><strong>Phone call</strong><span class="fee">&#8377;499</span><small>Talk to our dietitian by phone.</small></span></label>
-              <label class="choice"><input type="radio" name="consult" value="unsure"><span class="choice-box"><strong>Not sure yet</strong><span class="fee fee--sm">We will help</span><small>Our team will call you.</small></span></label>
+              <label class="choice"><input type="radio" name="consult" value="video"><span class="choice-box"><span class="choice-tick"><i data-i="check"></i></span><strong>Video call</strong><span class="fee">&#8377;799</span><small>Meet our dietitian online.</small></span></label>
+              <label class="choice"><input type="radio" name="consult" value="phone"><span class="choice-box"><span class="choice-tick"><i data-i="check"></i></span><strong>Phone call</strong><span class="fee">&#8377;499</span><small>Talk to our dietitian by phone.</small></span></label>
+              <label class="choice"><input type="radio" name="consult" value="unsure"><span class="choice-box"><span class="choice-tick"><i data-i="check"></i></span><strong>Not sure yet</strong><span class="fee fee--sm">We will help</span><small>Our team will call you.</small></span></label>
             </div>
           </div>
           <div class="actions"><button class="btn btn--primary btn--lg" type="button" data-next>Continue</button></div>
         </fieldset>
         <fieldset data-step="2" hidden>
-          <legend>About the patient</legend>
-          <p class="help">Fields marked <span class="req">*</span> are required.</p>
+          <legend>Patient details</legend>
+          <div class="need"><p class="need-title">What you need for this step</p><ul><li><i data-i="check"></i>The patient's name and age</li><li><i data-i="check"></i>How the patient is fed: RT tube, PEG tube or not sure</li><li><i data-i="check"></i>Your own name and mobile number, so we can reach you</li></ul></div>
+          <p class="req-note">Fields marked <span class="req">*</span> are mandatory.</p>
+          <h3 class="group-title">About the patient</h3>
           <div class="field-row">
             <div class="field"><label for="patient">Patient's name <span class="req">*</span></label><input id="patient" name="patient" type="text" required data-label="Patient's name"></div>
             <div class="field"><label for="age">Patient's age <span class="req">*</span></label><input id="age" name="age" type="number" inputmode="numeric" min="0" max="120" required data-label="Patient's age"></div>
           </div>
           <div class="field"><label for="route">How is the patient fed? <span class="req">*</span></label><select id="route" name="route" required><option value="">Choose one</option><option>RT / Ryles tube</option><option>PEG tube</option><option>Not sure</option></select></div>
+          <h3 class="group-title">How we can reach you</h3>
           <div class="field-row">
             <div class="field"><label for="contact-name">Your name <span class="req">*</span></label><input id="contact-name" name="contact-name" type="text" required data-label="Your name" autocomplete="name"></div>
             <div class="field"><label for="phone">Your mobile number <span class="req">*</span></label><input id="phone" name="phone" type="tel" inputmode="tel" required data-label="Mobile number" autocomplete="tel" placeholder="9876543210"></div>
@@ -56,11 +63,11 @@
         </fieldset>
         <fieldset data-step="3" hidden>
           <legend>Reports and send</legend>
-          <p class="help">Optional, but it helps our dietitian prepare.</p>
+          <div class="need"><p class="need-title">What you need for this step</p><ul><li><i data-i="check"></i>The doctor's prescription and recent reports, if you have them. This is optional, but it helps our dietitian prepare.</li><li><i data-i="check"></i>Tick the consent box, then send your request.</li></ul></div>
           <div class="field">
             <span class="label" id="upload-label">Medical reports or prescription</span>
-            <label class="upload" for="reports"><i data-i="upload"></i><strong>Choose files</strong><small class="muted">PDF, JPG or PNG</small><input id="reports" type="file" name="reports" multiple accept=".pdf,.jpg,.jpeg,.png" aria-labelledby="upload-label"></label>
-            <p class="file-names" id="file-names" aria-live="polite"></p>
+            <label class="upload" for="reports"><i data-i="upload"></i><strong>Choose files</strong><small class="muted">PDF, JPG or PNG. You can add more than one.</small><input id="reports" type="file" name="reports" multiple accept=".pdf,.jpg,.jpeg,.png" aria-labelledby="upload-label"></label>
+            <ul class="file-list" id="file-names" aria-live="polite"></ul>
           </div>
           <div class="field"><label for="notes">Anything else? <span class="opt">(optional)</span></label><textarea id="notes" name="notes"></textarea></div>
           <div class="field"><div class="check"><input id="consent" name="consent" type="checkbox" required data-error="Please tick this box so we can contact you."><label for="consent">I agree that MedMeal may contact me about this request.</label></div></div>

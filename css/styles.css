@@ -625,3 +625,67 @@ a[data-wa] { display: inline-flex; align-items: center; gap: 8px; }
 .hosp-hero .form-req { margin: 0 0 12px; color: var(--muted); font-size: 14px; line-height: 20px; }
 .hosp-hero .lab-banner { align-self: start; }
 @media (max-width: 479px) { .hosp-hero .form-note span { flex-basis: 100%; text-align: center; } }
+
+/* Booking form */
+.book-card { padding: 24px; }
+@media (min-width: 720px) { .book-card { padding: 32px; } }
+.stepper { display: flex; gap: 8px; list-style: none; margin: 0 0 32px; padding: 0; }
+.stepper li { flex: 1; display: flex; align-items: center; gap: 8px; padding-top: 12px; border-top: 4px solid var(--line); color: var(--muted); font: 500 14px/24px var(--text); min-width: 0; }
+.stepper li.is-current, .stepper li.is-done { border-top-color: var(--green); }
+.step-dot { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #D3DDD8; background: #fff; display: grid; place-items: center; flex: none; font: 600 12px/16px var(--text); }
+.step-dot .icon { display: none; width: 16px; height: 16px; stroke-width: 2.4; }
+.stepper li.is-current .step-dot, .stepper li.is-done .step-dot { background: var(--green); border-color: var(--green); color: #fff; }
+.stepper li.is-done .step-n { display: none; }
+.stepper li.is-done .step-dot .icon { display: block; }
+.stepper li.is-current .step-name, .stepper li.is-done .step-name { color: var(--ink); font-weight: 600; }
+.step-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+legend[tabindex="-1"]:focus { outline: none; }
+.book-card legend { font-size: 24px; line-height: 32px; margin-bottom: 16px; }
+.need { background: var(--mint); border-radius: 16px; padding: 16px; margin: 0 0 24px; }
+.need-title { margin: 0 0 8px; font: 600 14px/20px var(--text); color: var(--green-text); }
+.need ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.need li { display: flex; gap: 8px; color: var(--ink); font-size: 14px; line-height: 20px; }
+.need .icon { width: 20px; height: 20px; padding: 2px; box-sizing: border-box; color: var(--green-text); stroke-width: 2.6; }
+.req-note { margin: 0 0 16px; color: var(--muted); font-size: 14px; line-height: 20px; }
+.group-title { margin: 0 0 12px; font: 600 16px/24px var(--text); color: var(--ink); }
+.book-card .field-row + .group-title { margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--line); }
+.book-card .field { margin-bottom: 16px; }
+.book-card .field label { font-size: 14px; line-height: 20px; margin-bottom: 4px; }
+.book-card input[type="text"], .book-card input[type="tel"], .book-card input[type="number"], .book-card select, .book-card textarea { min-height: 44px; padding-top: 8px; padding-bottom: 8px; border-width: 1px; border-color: #D3DDD8; }
+.book-card textarea { min-height: 96px; }
+.book-card input:hover, .book-card select:hover, .book-card textarea:hover { border-color: #A9BAB1; }
+.book-card input:focus-visible, .book-card select:focus-visible, .book-card textarea:focus-visible { border-color: var(--green); }
+.book-card input::placeholder { color: #8A928E; }
+.book-card .field-error { margin-top: 4px; gap: 4px; font: 500 12px/16px var(--text); }
+.book-card .field-error svg { width: 12px; height: 12px; }
+.book-card input[aria-invalid="true"], .book-card select[aria-invalid="true"], .book-card textarea[aria-invalid="true"] { border-color: var(--error) !important; background-color: var(--error-tint); }
+.book-card .choices { gap: 12px; }
+.book-card .choice-box { position: relative; padding: 16px; border-width: 1px; border-color: #D3DDD8; border-radius: 12px; }
+.book-card .choice-box .fee { font-size: 24px; line-height: 32px; }
+.book-card .choice-box small { font-size: 14px; line-height: 20px; }
+.book-card .choice input:hover + .choice-box { border-color: #A9BAB1; }
+.book-card .choice input:checked + .choice-box { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); background: var(--mint); }
+.choice-tick { position: absolute; top: 12px; right: 12px; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #D3DDD8; background: #fff; display: grid; place-items: center; color: #fff; }
+.choice-tick .icon { width: 14px; height: 14px; stroke-width: 2.6; opacity: 0; }
+.choice input:checked + .choice-box .choice-tick { background: var(--green); border-color: var(--green); }
+.choice input:checked + .choice-box .choice-tick .icon { opacity: 1; }
+.book-card .upload { padding: 24px; border-width: 1px; border-color: #A9BAB1; border-radius: 12px; }
+.book-card .upload .icon { width: 24px; height: 24px; }
+.file-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.file-list li { display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.file-list .icon { color: var(--green-text); }
+.file-list .fn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font-weight: 500; }
+.file-list .fs { color: var(--muted); font-size: 14px; flex: none; }
+.file-list button { padding: 0; width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; flex: none; }
+.file-list button:hover { background: var(--w3); color: var(--ink); }
+.file-list button .icon { width: 16px; height: 16px; }
+.book-card .actions { margin-top: 24px; }
+.book-card .actions .btn { min-height: 48px; }
+@media (max-width: 479px) { .step-name { font-size: 12px; } .stepper li { gap: 4px; } .book-card .actions .btn { flex: 1; } }
+.success h2:focus { outline: none; }
+.check input { appearance: none; -webkit-appearance: none; width: 24px; height: 24px; border: 1px solid #A9BAB1; border-radius: 6px; background: #fff; cursor: pointer; transition: background-color .15s, border-color .15s; }
+.check input:hover { border-color: var(--green); }
+.check input:checked { background: var(--green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / 16px 16px no-repeat; border-color: var(--green); }
+.check input:focus-visible { outline: 3px solid rgba(42, 133, 87, .3); outline-offset: 2px; }
+.check input[aria-invalid="true"] { border-color: var(--error) !important; background-color: var(--error-tint); }
+.check input[aria-invalid="true"]:checked { background-color: var(--green); }

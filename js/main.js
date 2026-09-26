@@ -19,6 +19,7 @@
     whatsapp: '<path d="M3 21l1.65-3.8a9 9 0 1 1 3.4 2.9l-5.05.9"/><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/>',
     arrow: '<path d="M5 12h14M12 5l7 7-7 7"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
+    file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
     menu: '<path d="M4 12h16M4 6h16M4 18h16"/>',
     close: '<path d="M18 6 6 18M6 6l12 12"/>',
     leaf: '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
@@ -241,13 +242,16 @@
     if (!form) return;
     form.setAttribute("novalidate", "");
     liveValidate(form);
-    var steps = $$("fieldset[data-step]", form), inds = $$(".progress li"), lab = $("#progress-label"), TITLES = ["Consultation", "Patient details", "Reports and send"], cur = 0;
+    var steps = $$("fieldset[data-step]", form), inds = $$(".stepper li"), lab = $("#progress-label"), TITLES = ["Consultation", "Patient details", "Reports and send"], cur = 0;
     var FEES = { video: "₹799", phone: "₹499", unsure: "Fee shared by our team" };
     var NAMES = { video: "Video consultation", phone: "Phone consultation", unsure: "Not sure yet" };
     function show(n, initial) {
       cur = n;
       steps.forEach(function (s, i) { s.hidden = i !== n; });
-      inds.forEach(function (li, i) { li.classList.toggle("is-on", i <= n); });
+      inds.forEach(function (li, i) {
+        li.classList.toggle("is-done", i < n); li.classList.toggle("is-current", i === n);
+        if (i === n) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
+      });
       if (lab) lab.textContent = "Step " + (n + 1) + " of 3: " + TITLES[n];
       if (initial) return;
       var lg = $("legend", steps[n]); if (lg) { lg.setAttribute("tabindex", "-1"); lg.focus({ preventScroll: true }); }
@@ -265,10 +269,18 @@
     if (params.get("plan") && PLANS[params.get("plan")]) about = "I would like to ask about " + PLANS[params.get("plan")] + ".";
     if (params.get("feed") && FEEDS[params.get("feed")]) about = "I would like to ask about " + FEEDS[params.get("feed")] + ".";
     if (about) { var notes = $("#notes"); if (notes) notes.value = about; if (tag) { tag.hidden = false; tag.textContent = about.replace("I would like to ask about ", "Enquiry about: ").replace(/\.$/, ""); } }
-    var files = $("#reports"), names = $("#file-names");
-    if (files && names) files.addEventListener("change", function () {
-      names.textContent = files.files.length ? Array.prototype.map.call(files.files, function (f) { return f.name; }).join(", ") : "";
-    });
+    var files = $("#reports"), list = $("#file-names"), picked = [];
+    function size(b) { return b < 1048576 ? Math.max(1, Math.round(b / 1024)) + " KB" : (b / 1048576).toFixed(1) + " MB"; }
+    function drawFiles() {
+      var dt = new DataTransfer(); picked.forEach(function (f) { dt.items.add(f); }); files.files = dt.files;
+      list.innerHTML = picked.map(function (f, i) {
+        return '<li>' + icon("file") + '<span class="fn">' + esc(f.name) + '</span><span class="fs">' + size(f.size) + '</span><button type="button" data-rm="' + i + '" aria-label="Remove ' + esc(f.name) + '">' + icon("close") + '</button></li>';
+      }).join("");
+    }
+    if (files && list) {
+      files.addEventListener("change", function () { Array.prototype.forEach.call(files.files, function (f) { picked.push(f); }); drawFiles(); });
+      list.addEventListener("click", function (e) { var b = e.target.closest("button[data-rm]"); if (b) { picked.splice(+b.getAttribute("data-rm"), 1); drawFiles(); } });
+    }
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       if (!validate(steps[cur])) return;

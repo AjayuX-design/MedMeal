@@ -730,3 +730,10 @@ legend[tabindex="-1"]:focus { outline: none; }
 .footer-legal { display: flex; flex-wrap: wrap; gap: 8px 24px; }
 @media (min-width: 760px) { .fn-row { flex-direction: row; justify-content: space-between; align-items: center; gap: 32px; } .footer-legal { flex: none; flex-wrap: nowrap; } }
 @media (max-width: 599px) { .footer-note { margin-top: 32px; } }
+
+.pay-note { display: flex; gap: 12px; align-items: flex-start; padding: 16px; margin: 0 0 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--w2); }
+.pay-note .icon { color: var(--green-text); margin-top: 0; }
+.pay-note p { margin: 0; font-size: 14px; line-height: 20px; color: var(--body); }
+.pay-note strong { color: var(--ink); font-weight: 600; }
+.pay-note[hidden] { display: none; }
+#pay-error { margin: 0 0 16px; }

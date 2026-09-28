@@ -5,6 +5,8 @@
 
   // Contact details in one place. Confirm which number is WhatsApp before launch.
   var CALL = "918984463777";
+  // Razorpay key ID (public). Test keys start with rzp_test_. Swap for the live key ID after KYC. The key secret never goes in this file.
+  var RAZORPAY_KEY_ID = "rzp_test_ThNGDpNnXAkDaV";
   var WHATSAPP = "918984463777";
   var SECOND_LINE = "9533322296";
   var EMAIL = "info@medmeal.in";
@@ -246,6 +248,21 @@
     var steps = $$("fieldset[data-step]", form), inds = $$(".stepper li"), lab = $("#progress-label"), TITLES = ["Consultation", "Patient details", "Reports and send"], cur = 0;
     var FEES = { video: "₹799", phone: "₹499", unsure: "Fee shared by our team" };
     var NAMES = { video: "Video consultation", phone: "Phone consultation", unsure: "Not sure yet" };
+    var AMOUNTS = { video: 799, phone: 499 };
+    var isTest = /^rzp_test_/.test(RAZORPAY_KEY_ID);
+    function chosen() { return ($('input[name="consult"]:checked', form) || {}).value || "unsure"; }
+    function updatePay() {
+      var c = chosen(), amt = AMOUNTS[c], note = $("#pay-note"), btn = $("#submit-btn"), err = $("#pay-error");
+      if (err) { err.classList.remove("is-shown"); err.textContent = ""; }
+      if (note) { note.hidden = !amt; var line = $("#pay-line"); if (line && amt) line.textContent = "You will pay \u20B9" + amt + " securely with Razorpay."; var t = $("#test-note"); if (t) t.hidden = !isTest; }
+      if (btn) btn.textContent = amt ? "Pay \u20B9" + amt + " and confirm" : "Send request";
+    }
+    function loadRazorpay(cb, fail) {
+      if (window.Razorpay) return cb();
+      var sc = document.createElement("script"); sc.src = "https://checkout.razorpay.com/v1/checkout.js"; sc.async = true;
+      sc.onload = cb; sc.onerror = fail; document.head.appendChild(sc);
+    }
+    function payError(msg) { var e = $("#pay-error"); if (!e) return; e.innerHTML = icon("alert") + "<span>" + msg + "</span>"; e.classList.add("is-shown"); }
     function show(n, initial) {
       cur = n;
       steps.forEach(function (s, i) { s.hidden = i !== n; });
@@ -254,6 +271,7 @@
         if (i === n) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
       });
       if (lab) lab.textContent = "Step " + (n + 1) + " of 3: " + TITLES[n];
+      if (n === 2) updatePay();
       if (initial) return;
       var lg = $("legend", steps[n]); if (lg) { lg.setAttribute("tabindex", "-1"); lg.focus({ preventScroll: true }); }
       $("#form-top").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -262,7 +280,7 @@
     $$("[data-back]", form).forEach(function (b) { b.addEventListener("click", function () { show(cur - 1); }); });
     var fee = $("#fee-note");
     $$('input[name="consult"]', form).forEach(function (r) {
-      r.addEventListener("change", function () { if (fee) fee.textContent = FEES[r.value]; var g = $("#consult-group"); if (g) checkGroup(g); });
+      r.addEventListener("change", function () { if (fee) fee.textContent = FEES[r.value]; var g = $("#consult-group"); if (g) checkGroup(g); updatePay(); });
     });
     var params = new URLSearchParams(location.search), about = "", tag = $("#enquiry-tag");
     var PLANS = { daily: "the Daily plan", "15-day": "the 15-Day plan", monthly: "the Monthly plan" };
@@ -282,16 +300,40 @@
       files.addEventListener("change", function () { Array.prototype.forEach.call(files.files, function (f) { picked.push(f); }); drawFiles(); });
       list.addEventListener("click", function (e) { var b = e.target.closest("button[data-rm]"); if (b) { picked.splice(+b.getAttribute("data-rm"), 1); drawFiles(); } });
     }
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      if (!validate(steps[cur])) return;
-      var c = ($('input[name="consult"]:checked', form) || {}).value || "unsure";
-      var sum = $("#summary");
-      sum.innerHTML = "<dl><dt>Consultation</dt><dd>" + NAMES[c] + "</dd><dt>Patient</dt><dd>" + esc($("#patient").value) + "</dd><dt>Contact</dt><dd>" + esc($("#phone").value) + "</dd></dl>";
+    function finish(payId) {
+      var c = chosen(), sum = $("#summary");
+      sum.innerHTML = "<dl><dt>Consultation</dt><dd>" + NAMES[c] + "</dd><dt>Patient</dt><dd>" + esc($("#patient").value) + "</dd><dt>Contact</dt><dd>" + esc($("#phone").value) + "</dd>" + (payId ? "<dt>Payment</dt><dd>\u20B9" + AMOUNTS[c] + " paid<br><small class=\"muted\">ID " + esc(payId) + "</small></dd>" : "") + "</dl>";
       $("#thanks-name").textContent = $("#contact-name").value.trim().split(" ")[0];
       $("#form-wrap").hidden = true; $("#thanks").hidden = false;
       var h = $("#thanks h2"); h.setAttribute("tabindex", "-1"); h.focus();
       $("#form-top").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    function pay(c) {
+      var btn = $("#submit-btn"), label = btn.textContent;
+      btn.disabled = true; btn.textContent = "Opening payment...";
+      function reset() { btn.disabled = false; btn.textContent = label; }
+      loadRazorpay(function () {
+        var rz = new window.Razorpay({
+          key: RAZORPAY_KEY_ID,
+          amount: AMOUNTS[c] * 100,
+          currency: "INR",
+          name: "MedMeal",
+          description: NAMES[c],
+          prefill: { name: $("#contact-name").value.trim(), contact: $("#phone").value.trim() },
+          notes: { consultation: NAMES[c], patient: $("#patient").value.trim() },
+          theme: { color: "#2A8557" },
+          handler: function (r) { reset(); finish(r.razorpay_payment_id); },
+          modal: { ondismiss: reset }
+        });
+        rz.on("payment.failed", function () { reset(); payError("The payment did not go through. You have not been charged. Please try again, or call us."); });
+        rz.open();
+      }, function () { reset(); payError("We could not open the payment window. Please check your internet and try again, or call us."); });
+    }
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!validate(steps[cur])) return;
+      var c = chosen(), err = $("#pay-error"); if (err) err.classList.remove("is-shown");
+      if (AMOUNTS[c]) pay(c); else finish();
     });
     show(0, true);
   }

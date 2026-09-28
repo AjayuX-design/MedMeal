@@ -63,7 +63,7 @@
         </fieldset>
         <fieldset data-step="3" hidden>
           <legend>Reports and send</legend>
-          <div class="need"><p class="need-title">What you need for this step</p><ul><li><i data-i="check"></i>The doctor's prescription and recent reports, if you have them. This is optional, but it helps our dietitian prepare.</li><li><i data-i="check"></i>Tick the consent box, then send your request.</li></ul></div>
+          <div class="need"><p class="need-title">What you need for this step</p><ul><li><i data-i="check"></i>The doctor's prescription and recent reports, if you have them. This is optional, but it helps our dietitian prepare.</li><li><i data-i="check"></i>Tick the consent box, then pay online. If you chose "Not sure yet", just send your request.</li></ul></div>
           <div class="field">
             <span class="label" id="upload-label">Medical reports or prescription</span>
             <label class="upload" for="reports"><i data-i="upload"></i><strong>Choose files</strong><small class="muted">PDF, JPG or PNG. You can add more than one.</small><input id="reports" type="file" name="reports" multiple accept=".pdf,.jpg,.jpeg,.png" aria-labelledby="upload-label"></label>
@@ -71,7 +71,9 @@
           </div>
           <div class="field"><label for="notes">Anything else? <span class="opt">(optional)</span></label><textarea id="notes" name="notes"></textarea></div>
           <div class="field"><div class="check"><input id="consent" name="consent" type="checkbox" required data-error="Please tick this box so we can contact you."><label for="consent">I agree that MedMeal may contact me about this request, and I accept the <a href="terms.html" target="_blank" rel="noopener">Terms</a>, <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a> and <a href="refund-policy.html" target="_blank" rel="noopener">Refund Policy</a>.</label></div></div>
-          <div class="actions"><button class="btn btn--outline btn--lg" type="button" data-back>Back</button><button class="btn btn--primary btn--lg" type="submit">Send request</button></div>
+          <div class="pay-note" id="pay-note" hidden><i data-i="shield"></i><p><strong id="pay-line">You will pay securely with Razorpay.</strong> UPI, cards and netbanking are accepted.<span id="test-note" hidden> Test mode: no real money is charged.</span></p></div>
+          <p class="field-error" id="pay-error" role="alert"></p>
+          <div class="actions"><button class="btn btn--outline btn--lg" type="button" data-back>Back</button><button class="btn btn--primary btn--lg" type="submit" id="submit-btn">Send request</button></div>
         </fieldset>
       </form>
     </div>

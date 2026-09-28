@@ -59,8 +59,9 @@
   }
 
   var NAV = [
-    ["Solutions", "solutions.html"],
+    ["Home", "index.html"],
     ["RT and PEG", "rt-peg-feeding.html"],
+    ["Solutions", "solutions.html"],
     ["Hospitals", "for-hospitals.html"],
     ["About", "about.html"],
     ["Contact", "contact.html"]

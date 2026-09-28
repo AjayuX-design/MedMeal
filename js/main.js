@@ -218,6 +218,33 @@
     if (firstBad) firstBad.focus();
     return ok;
   }
+  function fieldOk(f) {
+    var v = (f.value || "").trim();
+    if (f.type === "checkbox") return !f.required || f.checked;
+    if (f.required && !v) return false;
+    if (v && f.type === "tel" && !/^(\+?91)?[6-9]\d{9}$/.test(v.replace(/[\s-]/g, ""))) return false;
+    if (v && f.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return false;
+    if (v && f.type === "number") { var n = Number(v); if (isNaN(n) || (f.min && n < Number(f.min)) || (f.max && n > Number(f.max))) return false; }
+    return true;
+  }
+  function isReady(scope) {
+    var ok = true;
+    $$("input[required], select[required], textarea[required], input[type=tel], input[type=email], input[type=number]", scope).forEach(function (f) { if (f.type !== "radio" && !fieldOk(f)) ok = false; });
+    $$("[data-group]", scope).forEach(function (g) { if (!$$('input[type="radio"]', g).some(function (r) { return r.checked; })) ok = false; });
+    return ok;
+  }
+  // Keeps a button disabled until every required field in scope is filled and valid.
+  function gate(scope, btn) {
+    if (!btn) return function () {};
+    function update() {
+      var ok = isReady(scope);
+      btn.disabled = !ok;
+      if (ok) btn.removeAttribute("title"); else btn.setAttribute("title", "Fill in the mandatory fields to continue");
+    }
+    scope.addEventListener("input", update); scope.addEventListener("change", update);
+    update();
+    return update;
+  }
   function liveValidate(form) {
     $$("input, select, textarea", form).forEach(function (f) {
       if (f.type === "radio") return;
@@ -230,12 +257,14 @@
     $$("form[data-simple]").forEach(function (form) {
       form.setAttribute("novalidate", "");
       liveValidate(form);
+      var refresh = gate(form, $('button[type="submit"]', form));
       form.addEventListener("submit", function (e) {
         e.preventDefault();
         if (!validate(form)) return;
         var ok = $(".inline-success", form);
         if (ok) { ok.classList.add("is-shown"); ok.focus(); }
         form.reset();
+        refresh();
       });
     });
   }
@@ -245,6 +274,7 @@
     if (!form) return;
     form.setAttribute("novalidate", "");
     liveValidate(form);
+    var updateSubmit = function () {};
     var steps = $$("fieldset[data-step]", form), inds = $$(".stepper li"), lab = $("#progress-label"), TITLES = ["Consultation", "Patient details", "Reports and send"], cur = 0;
     var FEES = { video: "₹799", phone: "₹499", unsure: "Fee shared by our team" };
     var NAMES = { video: "Video consultation", phone: "Phone consultation", unsure: "Not sure yet" };
@@ -311,7 +341,7 @@
     function pay(c) {
       var btn = $("#submit-btn"), label = btn.textContent;
       btn.disabled = true; btn.textContent = "Opening payment...";
-      function reset() { btn.disabled = false; btn.textContent = label; }
+      function reset() { btn.textContent = label; updateSubmit(); }
       loadRazorpay(function () {
         var rz = new window.Razorpay({
           key: RAZORPAY_KEY_ID,
@@ -336,6 +366,8 @@
       if (AMOUNTS[c]) pay(c); else finish();
     });
     show(0, true);
+    var updaters = steps.map(function (st) { return gate(st, $("[data-next], [type=submit]", st)); });
+    updateSubmit = updaters[2];
   }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 

@@ -737,3 +737,6 @@ legend[tabindex="-1"]:focus { outline: none; }
 .pay-note strong { color: var(--ink); font-weight: 600; }
 .pay-note[hidden] { display: none; }
 #pay-error { margin: 0 0 16px; }
+
+.btn:disabled, .btn[disabled] { background: var(--line); border-color: var(--line); color: #6B7A72; cursor: not-allowed; box-shadow: none; transform: none; }
+.btn:disabled:hover, .btn[disabled]:hover { background: var(--line); color: #6B7A72; }

@@ -97,7 +97,7 @@
       '<div><h2>Contact</h2><ul>' +
       '<li><a data-call href="#">8984463777</a></li><li><a href="tel:+91' + SECOND_LINE + '">' + SECOND_LINE + '</a></li>' +
       '<li><a href="mailto:' + EMAIL + '">' + EMAIL + '</a></li><li>Vijayawada, Andhra Pradesh</li></ul></div></div>' +
-      '<div class="footer-note"><p>Feed selection is guided by a dietitian and based on each patient\'s clinical and nutritional needs. Information on this site does not replace medical advice.</p><nav class="footer-legal" aria-label="Policies"><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a><a href="refund-policy.html">Refunds</a></nav><p>&copy; <span id="year"></span> MedMeal.<br><span class="footer-credit">Designed by <a href="https://www.pixxelnesst.com/" target="_blank" rel="noopener">Pixxel Nesst</a></span></p></div></div></footer>' +
+      '<div class="footer-note"><div class="fn-row"><p>Information on this site does not replace medical advice.</p><nav class="footer-legal" aria-label="Policies"><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a><a href="refund-policy.html">Refunds</a></nav></div><div class="fn-row"><p>&copy; <span id="year"></span> MedMeal.</p><p class="footer-credit">Designed by <a href="https://www.pixxelnesst.com/" target="_blank" rel="noopener">Pixxel Nesst</a></p></div></div></div></footer>' +
       '<div class="mobile-bar" role="group" aria-label="Quick contact"><a class="btn btn--outline" data-call href="#">Call</a><a class="btn btn--outline" data-wa href="#"><i data-i="whatsapp"></i>WhatsApp</a><a class="btn btn--primary" href="book.html">Book now</a></div>';
   }
 

@@ -400,9 +400,6 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 .site-footer a:hover { color: var(--green-text); }
 .site-footer .brand { color: var(--green-text); }
 .footer-about { margin: 12px 0 0; max-width: 26ch; }
-.footer-note { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--muted); }
-.footer-note p { margin: 0 0 8px; max-width: 72ch; }
-@media (min-width: 760px) { .footer-note { display: flex; justify-content: space-between; align-items: flex-start; gap: 32px; } .footer-note p { margin: 0; } .footer-note p:last-child { text-align: right; white-space: nowrap; } }
 
 /* Mobile action bar */
 .mobile-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 90; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 12px 12px calc(12px + env(safe-area-inset-bottom)); background: rgba(255, 255, 255, .97); box-shadow: 0 -1px 0 var(--line); }
@@ -721,11 +718,15 @@ legend[tabindex="-1"]:focus { outline: none; }
 .legal ul { list-style: disc; padding-left: 24px; margin: 0 0 16px; max-width: 62ch; }
 .legal li { margin-bottom: 8px; }
 .legal a { color: var(--green-text); text-decoration: underline; text-underline-offset: 4px; }
-.footer-legal { display: flex; flex-wrap: wrap; gap: 8px 16px; }
 .footer-legal a { color: var(--muted); }
 .footer-legal a:hover { color: var(--ink); }
-@media (min-width: 760px) { .footer-note .footer-legal { margin: 0; } }
 .check label a { color: var(--green-text); text-decoration: underline; text-underline-offset: 4px; }
-@media (min-width: 760px) { .footer-legal { flex: none; flex-wrap: nowrap; white-space: nowrap; } }
 .footer-credit a { color: var(--muted); text-decoration: underline; text-underline-offset: 4px; }
 .footer-credit a:hover { color: var(--ink); }
+
+.footer-note { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--line); color: var(--muted); display: grid; gap: 16px; }
+.fn-row { display: flex; flex-direction: column; gap: 8px; }
+.fn-row p { margin: 0; }
+.footer-legal { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+@media (min-width: 760px) { .fn-row { flex-direction: row; justify-content: space-between; align-items: center; gap: 32px; } .footer-legal { flex: none; flex-wrap: nowrap; } }
+@media (max-width: 599px) { .footer-note { margin-top: 32px; } }

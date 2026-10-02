@@ -38,17 +38,18 @@
   </div>
   <div class="form-card" id="enquiry">
       <div class="form-head"><span class="icon-circle"><i data-i="heart"></i></span><div><h2 class="h2--sm">Partnership enquiry</h2></div></div>
-      <form data-simple novalidate>
+      <form data-simple data-type="hospital" novalidate>
+        <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
         <p class="form-req">Fields marked <span class="req">*</span> are mandatory.</p>
         <div class="field-row">
           <div class="field"><label for="org">Organisation <span class="req">*</span></label><input id="org" name="org" type="text" required data-label="Organisation" data-error="Enter organisation name." autocomplete="organization"></div>
-          <div class="field"><label for="ftype">Type <span class="req">*</span></label><select id="ftype" name="ftype" required data-error="Choose a type."><option value="">Choose one</option><option>Hospital</option><option>Rehabilitation centre</option><option>Other healthcare team</option></select></div>
+          <div class="field"><label for="ftype">Type <span class="req">*</span></label><select id="ftype" name="type" required data-error="Choose a type."><option value="">Choose one</option><option>Hospital</option><option>Rehabilitation centre</option><option>Other healthcare team</option></select></div>
         </div>
         <div class="field-row">
-          <div class="field"><label for="hname">Your name <span class="req">*</span></label><input id="hname" name="hname" type="text" required data-label="Your name" data-error="Enter your name." autocomplete="name"></div>
-          <div class="field"><label for="hphone">Mobile number <span class="req">*</span></label><input id="hphone" name="hphone" type="tel" inputmode="tel" required data-label="Mobile number" data-error="Enter mobile number." autocomplete="tel" placeholder="9876543210"></div>
+          <div class="field"><label for="hname">Your name <span class="req">*</span></label><input id="hname" name="name" type="text" required data-label="Your name" data-error="Enter your name." autocomplete="name"></div>
+          <div class="field"><label for="hphone">Mobile number <span class="req">*</span></label><input id="hphone" name="mobile" type="tel" inputmode="tel" required data-label="Mobile number" data-error="Enter mobile number." autocomplete="tel" placeholder="9876543210"></div>
         </div>
-        <div class="field field--grow"><label for="hmsg">How can we help? <span class="opt">(optional)</span></label><textarea id="hmsg" name="hmsg"></textarea></div>
+        <div class="field field--grow"><label for="hmsg">How can we help? <span class="opt">(optional)</span></label><textarea id="hmsg" name="message"></textarea></div>
         <button class="btn btn--primary btn--lg btn--block" type="submit">Send enquiry</button>
         <p class="form-note"><span>Prefer to talk first?</span><a class="text-link" data-call href="#"><i data-i="phone"></i>Call Us</a><a class="text-link" data-wa href="#"><i data-i="whatsapp"></i>WhatsApp Us</a></p>
         <div class="inline-success" role="status" tabindex="-1"><i data-i="check"></i><span>Thank you. Our team will get in touch.</span></div>

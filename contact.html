@@ -28,13 +28,14 @@
 <section class="section section--tight"><div class="container form-layout">
   <div class="form-card book-card contact-card">
     <div class="form-head"><span class="icon-circle"><i data-i="mail"></i></span><h2 class="h2--sm">Send a message</h2></div>
-    <form data-simple novalidate>
+    <form data-simple data-type="contact" novalidate>
+      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
       <p class="req-note">Fields marked <span class="req">*</span> are mandatory.</p>
       <div class="field-row">
-        <div class="field"><label for="cname">Your name <span class="req">*</span></label><input id="cname" name="cname" type="text" required data-label="Your name" data-error="Enter your name." autocomplete="name"></div>
-        <div class="field"><label for="cphone">Mobile number <span class="req">*</span></label><input id="cphone" name="cphone" type="tel" inputmode="tel" required data-label="Mobile number" data-error="Enter mobile number." autocomplete="tel" placeholder="9876543210"></div>
+        <div class="field"><label for="cname">Your name <span class="req">*</span></label><input id="cname" name="name" type="text" required data-label="Your name" data-error="Enter your name." autocomplete="name"></div>
+        <div class="field"><label for="cphone">Mobile number <span class="req">*</span></label><input id="cphone" name="mobile" type="tel" inputmode="tel" required data-label="Mobile number" data-error="Enter mobile number." autocomplete="tel" placeholder="9876543210"></div>
       </div>
-      <div class="field"><label for="cmsg">How can we help? <span class="req">*</span></label><textarea id="cmsg" name="cmsg" required data-label="Your message" data-error="Enter your message."></textarea></div>
+      <div class="field"><label for="cmsg">How can we help? <span class="req">*</span></label><textarea id="cmsg" name="message" required data-label="Your message" data-error="Enter your message."></textarea></div>
       <button class="btn btn--primary btn--lg btn--block" type="submit">Send message</button>
       <div class="inline-success" role="status" tabindex="-1"><i data-i="check"></i><span>Thank you. Our team will get back to you.</span></div>
     </form>

@@ -740,3 +740,6 @@ legend[tabindex="-1"]:focus { outline: none; }
 
 .btn:disabled, .btn[disabled] { background: var(--line); border-color: var(--line); color: #6B7A72; cursor: not-allowed; box-shadow: none; transform: none; }
 .btn:disabled:hover, .btn[disabled]:hover { background: var(--line); color: #6B7A72; }
+
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+form .field-error.form-fail { white-space: normal; margin: 0 0 12px; }

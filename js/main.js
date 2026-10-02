@@ -251,18 +251,33 @@
     });
   }
 
+  function postJSON(url, body) {
+    return fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { if (!r.ok) throw new Error(d.error || "failed"); return d; }); });
+  }
+
   function simpleForms() {
     $$("form[data-simple]").forEach(function (form) {
       form.setAttribute("novalidate", "");
       liveValidate(form);
-      var refresh = gate(form, $('button[type="submit"]', form));
+      var btn = $('button[type="submit"]', form), refresh = gate(form, btn);
       form.addEventListener("submit", function (e) {
         e.preventDefault();
         if (!validate(form)) return;
-        var ok = $(".inline-success", form);
-        if (ok) { ok.classList.add("is-shown"); ok.focus(); }
-        form.reset();
-        refresh();
+        var ok = $(".inline-success", form), fail = $(".form-fail", form), label = btn.textContent, data = { form: form.getAttribute("data-type") };
+        if (fail) fail.remove();
+        if (ok) ok.classList.remove("is-shown");
+        $$("input[name], select[name], textarea[name]", form).forEach(function (f) { data[f.name] = f.value.trim(); });
+        btn.disabled = true; btn.textContent = "Sending...";
+        postJSON("/api/submit", data).then(function (r) {
+          if (ok) { $("span", ok).textContent = "Thank you. Our team will get back to you." + (r.reference ? " Your reference is " + r.reference + "." : ""); ok.classList.add("is-shown"); ok.focus(); }
+          form.reset();
+        }).catch(function (err) {
+          console.warn("Form could not be sent:", err && err.message);
+          var p = document.createElement("p"); p.className = "field-error form-fail is-shown"; p.setAttribute("role", "alert");
+          p.innerHTML = icon("alert") + "<span>We could not send this. Please try again, or call us.</span>";
+          btn.parentNode.insertBefore(p, btn);
+        }).then(function () { btn.textContent = label; refresh(); });
       });
     });
   }
@@ -327,22 +342,33 @@
       files.addEventListener("change", function () { Array.prototype.forEach.call(files.files, function (f) { picked.push(f); }); drawFiles(); });
       list.addEventListener("click", function (e) { var b = e.target.closest("button[data-rm]"); if (b) { picked.splice(+b.getAttribute("data-rm"), 1); drawFiles(); } });
     }
-    function finish(payId, ref) {
+    function finish(payId, ref, notified) {
       var c = chosen(), sum = $("#summary");
       sum.innerHTML = "<dl>" + (ref ? "<dt>Reference</dt><dd>" + esc(ref) + "</dd>" : "") + "<dt>Consultation</dt><dd>" + NAMES[c] + "</dd><dt>Patient</dt><dd>" + esc($("#patient").value) + "</dd><dt>Contact</dt><dd>" + esc($("#phone").value) + "</dd>" + (payId ? "<dt>Payment</dt><dd>\u20B9" + AMOUNTS[c] + " paid<br><small class=\"muted\">ID " + esc(payId) + "</small></dd>" : "") + "</dl>";
+      if (notified === false) sum.insertAdjacentHTML("beforeend", '<p class="field-error is-shown" role="alert">' + icon("alert") + "<span>We could not pass your details to our team. Please call us and quote reference " + esc(ref || "") + " (payment ID " + esc(payId) + ").</span></p>");
       $("#thanks-name").textContent = $("#contact-name").value.trim().split(" ")[0];
       $("#form-wrap").hidden = true; $("#thanks").hidden = false;
       var h = $("#thanks h2"); h.setAttribute("tabindex", "-1"); h.focus();
       $("#form-top").scrollIntoView({ behavior: "smooth", block: "start" });
     }
+    function details() {
+      return {
+        patient: $("#patient").value.trim(), age: $("#age").value.trim(), route: $("#route").value, contactName: $("#contact-name").value.trim(),
+        mobile: $("#phone").value.trim(), notes: $("#notes").value.trim(), reports: picked.map(function (f) { return f.name; }).join(", "),
+        website: ($('input[name="website"]', form) || {}).value || ""
+      };
+    }
+    function sendRequest() {
+      var btn = $("#submit-btn"), label = btn.textContent;
+      btn.disabled = true; btn.textContent = "Sending...";
+      postJSON("/api/submit", Object.assign({ form: "booking" }, details()))
+        .then(function (r) { btn.textContent = label; updateSubmit(); finish(null, r.reference); })
+        .catch(function (e) { console.warn("Request could not be sent:", e && e.message); btn.textContent = label; updateSubmit(); payError("We could not send your request. Please try again, or call us."); });
+    }
     function pay(c) {
       var btn = $("#submit-btn"), label = btn.textContent;
       btn.disabled = true; btn.textContent = "Opening payment...";
       function reset() { btn.textContent = label; updateSubmit(); }
-      function post(url, body) {
-        return fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
-          .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || "failed"); return d; }); });
-      }
       function openCheckout(order) {
         var rz = new window.Razorpay({
           key: order.key_id,
@@ -356,7 +382,7 @@
           theme: { color: "#2A8557" },
           handler: function (r) {
             btn.textContent = "Confirming payment...";
-            post("/api/verify-payment", r).then(function () { reset(); finish(r.razorpay_payment_id, order.receipt); })
+            postJSON("/api/verify-payment", Object.assign({}, r, { details: details() })).then(function (v) { reset(); finish(r.razorpay_payment_id, order.receipt, v.notified); })
               .catch(function () { reset(); payError("We could not confirm your payment. If money was taken, please call us and quote payment ID " + esc(r.razorpay_payment_id) + "."); });
           },
           modal: { ondismiss: reset }
@@ -364,7 +390,7 @@
         rz.on("payment.failed", function () { reset(); payError("The payment did not go through. You have not been charged. Please try again, or call us."); });
         rz.open();
       }
-      post("/api/create-order", { consult: c })
+      postJSON("/api/create-order", { consult: c })
         .then(function (order) { return new Promise(function (ok, no) { loadRazorpay(function () { ok(order); }, no); }); })
         .then(openCheckout)
         .catch(function (e) { console.warn("Payment could not start:", e && e.message); reset(); payError("We could not start the payment. Please check your internet and try again, or call us."); });
@@ -373,7 +399,7 @@
       e.preventDefault();
       if (!validate(steps[cur])) return;
       var c = chosen(), err = $("#pay-error"); if (err) err.classList.remove("is-shown");
-      if (AMOUNTS[c]) pay(c); else finish();
+      if (AMOUNTS[c]) pay(c); else sendRequest();
     });
     show(0, true);
     var updaters = steps.map(function (st) { return gate(st, $("[data-next], [type=submit]", st)); });

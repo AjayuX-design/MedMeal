@@ -1,5 +1,7 @@
 // POST /api/create-order  { consult: "video" | "phone" }
 // Creates a Razorpay order. The price is set here, never taken from the browser.
+const { ref } = require("./_notify");
+
 const PRICES = { video: 799, phone: 499 }; // rupees
 
 module.exports = async (req, res) => {
@@ -14,12 +16,6 @@ module.exports = async (req, res) => {
   const amount = rupees * 100; // paise
   if (amount < 100) return res.status(400).json({ error: "Amount too small" });
 
-  // Reference like MM-261002-4F7K. ponytail: random suffix, swap for a database ID once one exists.
-  const d = new Date();
-  const p = (n) => String(n).padStart(2, "0");
-  const receipt = "MM-" + String(d.getUTCFullYear()).slice(2) + p(d.getUTCMonth() + 1) + p(d.getUTCDate()) +
-    "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
-
   let r;
   try {
     r = await fetch("https://api.razorpay.com/v1/orders", {
@@ -28,7 +24,7 @@ module.exports = async (req, res) => {
         "Content-Type": "application/json",
         Authorization: "Basic " + Buffer.from(keyId + ":" + secret).toString("base64"),
       },
-      body: JSON.stringify({ amount, currency: "INR", receipt }),
+      body: JSON.stringify({ amount, currency: "INR", receipt: ref() }),
     });
   } catch (e) {
     return res.status(500).json({ error: "Could not reach Razorpay" });

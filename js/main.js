@@ -5,8 +5,6 @@
 
   // Contact details in one place. Confirm which number is WhatsApp before launch.
   var CALL = "918984463777";
-  // Razorpay key ID (public). Test keys start with rzp_test_. Swap for the live key ID after KYC. The key secret never goes in this file.
-  var RAZORPAY_KEY_ID = "rzp_test_ThNGDpNnXAkDaV";
   var WHATSAPP = "918984463777";
   var SECOND_LINE = "9533322296";
   var EMAIL = "info@medmeal.in";
@@ -279,12 +277,11 @@
     var FEES = { video: "₹799", phone: "₹499", unsure: "Fee shared by our team" };
     var NAMES = { video: "Video consultation", phone: "Phone consultation", unsure: "Not sure yet" };
     var AMOUNTS = { video: 799, phone: 499 };
-    var isTest = /^rzp_test_/.test(RAZORPAY_KEY_ID);
     function chosen() { return ($('input[name="consult"]:checked', form) || {}).value || "unsure"; }
     function updatePay() {
       var c = chosen(), amt = AMOUNTS[c], note = $("#pay-note"), btn = $("#submit-btn"), err = $("#pay-error");
       if (err) { err.classList.remove("is-shown"); err.textContent = ""; }
-      if (note) { note.hidden = !amt; var line = $("#pay-line"); if (line && amt) line.textContent = "You will pay \u20B9" + amt + " securely with Razorpay."; var t = $("#test-note"); if (t) t.hidden = !isTest; }
+      if (note) { note.hidden = !amt; var line = $("#pay-line"); if (line && amt) line.textContent = "You will pay \u20B9" + amt + " securely with Razorpay."; }
       if (btn) btn.textContent = amt ? "Pay \u20B9" + amt + " and confirm" : "Send request";
     }
     function loadRazorpay(cb, fail) {
@@ -330,9 +327,9 @@
       files.addEventListener("change", function () { Array.prototype.forEach.call(files.files, function (f) { picked.push(f); }); drawFiles(); });
       list.addEventListener("click", function (e) { var b = e.target.closest("button[data-rm]"); if (b) { picked.splice(+b.getAttribute("data-rm"), 1); drawFiles(); } });
     }
-    function finish(payId) {
+    function finish(payId, ref) {
       var c = chosen(), sum = $("#summary");
-      sum.innerHTML = "<dl><dt>Consultation</dt><dd>" + NAMES[c] + "</dd><dt>Patient</dt><dd>" + esc($("#patient").value) + "</dd><dt>Contact</dt><dd>" + esc($("#phone").value) + "</dd>" + (payId ? "<dt>Payment</dt><dd>\u20B9" + AMOUNTS[c] + " paid<br><small class=\"muted\">ID " + esc(payId) + "</small></dd>" : "") + "</dl>";
+      sum.innerHTML = "<dl>" + (ref ? "<dt>Reference</dt><dd>" + esc(ref) + "</dd>" : "") + "<dt>Consultation</dt><dd>" + NAMES[c] + "</dd><dt>Patient</dt><dd>" + esc($("#patient").value) + "</dd><dt>Contact</dt><dd>" + esc($("#phone").value) + "</dd>" + (payId ? "<dt>Payment</dt><dd>\u20B9" + AMOUNTS[c] + " paid<br><small class=\"muted\">ID " + esc(payId) + "</small></dd>" : "") + "</dl>";
       $("#thanks-name").textContent = $("#contact-name").value.trim().split(" ")[0];
       $("#form-wrap").hidden = true; $("#thanks").hidden = false;
       var h = $("#thanks h2"); h.setAttribute("tabindex", "-1"); h.focus();
@@ -342,22 +339,35 @@
       var btn = $("#submit-btn"), label = btn.textContent;
       btn.disabled = true; btn.textContent = "Opening payment...";
       function reset() { btn.textContent = label; updateSubmit(); }
-      loadRazorpay(function () {
+      function post(url, body) {
+        return fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+          .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || "failed"); return d; }); });
+      }
+      function openCheckout(order) {
         var rz = new window.Razorpay({
-          key: RAZORPAY_KEY_ID,
-          amount: AMOUNTS[c] * 100,
-          currency: "INR",
+          key: order.key_id,
+          order_id: order.order_id,
+          amount: order.amount,
+          currency: order.currency,
           name: "MedMeal",
           description: NAMES[c],
-          prefill: { name: $("#contact-name").value.trim(), contact: $("#phone").value.trim() },
+          prefill: { name: $("#contact-name").value.trim(), contact: $("#phone").value.replace(/[\s-]/g, "").replace(/^(\d{10})$/, "+91$1") },
           notes: { consultation: NAMES[c], patient: $("#patient").value.trim() },
           theme: { color: "#2A8557" },
-          handler: function (r) { reset(); finish(r.razorpay_payment_id); },
+          handler: function (r) {
+            btn.textContent = "Confirming payment...";
+            post("/api/verify-payment", r).then(function () { reset(); finish(r.razorpay_payment_id, order.receipt); })
+              .catch(function () { reset(); payError("We could not confirm your payment. If money was taken, please call us and quote payment ID " + esc(r.razorpay_payment_id) + "."); });
+          },
           modal: { ondismiss: reset }
         });
         rz.on("payment.failed", function () { reset(); payError("The payment did not go through. You have not been charged. Please try again, or call us."); });
         rz.open();
-      }, function () { reset(); payError("We could not open the payment window. Please check your internet and try again, or call us."); });
+      }
+      post("/api/create-order", { consult: c })
+        .then(function (order) { return new Promise(function (ok, no) { loadRazorpay(function () { ok(order); }, no); }); })
+        .then(openCheckout)
+        .catch(function (e) { console.warn("Payment could not start:", e && e.message); reset(); payError("We could not start the payment. Please check your internet and try again, or call us."); });
     }
     form.addEventListener("submit", function (e) {
       e.preventDefault();

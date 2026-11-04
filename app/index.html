@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Sign in | MedMeal staff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="../favicon.ico">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<main class="login">
+  <p class="brand">MedMeal <span>Staff</span></p>
+  <h1>Sign in</h1>
+  <p>Choose your role, then use the email and password you were given.</p>
+  <p class="msg" id="msg" role="alert"></p>
+  <form id="login-form" novalidate>
+    <fieldset class="roles">
+      <legend>Who are you?</legend>
+      <label class="role"><input type="radio" name="role" value="dietitian" required><span>Dietitian</span></label>
+      <label class="role"><input type="radio" name="role" value="kitchen"><span>Kitchen</span></label>
+      <label class="role"><input type="radio" name="role" value="admin"><span>Admin</span></label>
+    </fieldset>
+    <label class="field"><span>Email</span><input id="email" type="email" autocomplete="username" required></label>
+    <label class="field"><span>Password</span><input id="password" type="password" autocomplete="current-password" required></label>
+    <button class="btn" id="login-btn" type="submit">Sign in</button>
+  </form>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

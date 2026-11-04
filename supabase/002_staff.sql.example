@@ -1,0 +1,6 @@
+-- Run after you have created the three users under Authentication > Users.
+-- Replace each id with that user's UID (shown in the Users list) and each name with the person's name.
+insert into staff (id, name, role) values
+  ('00000000-0000-0000-0000-000000000001', 'Dietitian name', 'dietitian'),
+  ('00000000-0000-0000-0000-000000000002', 'Kitchen name', 'kitchen'),
+  ('00000000-0000-0000-0000-000000000003', 'Admin name', 'admin');

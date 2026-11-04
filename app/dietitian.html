@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Dietitian | MedMeal staff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="../favicon.ico">
+<link rel="stylesheet" href="app.css">
+</head>
+<body data-role="dietitian" hidden>
+<header class="bar">
+  <span class="brand">MedMeal <span>Dietitian</span></span>
+  <div class="who"><span id="who-name"></span><button class="btn btn--quiet" id="signout" type="button">Sign out</button></div>
+</header>
+<main class="page">
+  <h1>Dietitian</h1>
+  <p class="lead">You are signed in as a dietitian. Paid bookings will appear here.</p>
+  <div class="tiles" id="tiles"></div>
+  <p class="note">The booking list, patient page and plan builder arrive in the next parts of the build.</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

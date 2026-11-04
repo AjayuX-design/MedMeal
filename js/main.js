@@ -390,7 +390,7 @@
         rz.on("payment.failed", function () { reset(); payError("The payment did not go through. You have not been charged. Please try again, or call us."); });
         rz.open();
       }
-      postJSON("/api/create-order", { consult: c })
+      postJSON("/api/create-order", { consult: c, details: details() })
         .then(function (order) { return new Promise(function (ok, no) { loadRazorpay(function () { ok(order); }, no); }); })
         .then(openCheckout)
         .catch(function (e) { console.warn("Payment could not start:", e && e.message); reset(); payError("We could not start the payment. Please check your internet and try again, or call us."); });

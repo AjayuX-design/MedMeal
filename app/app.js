@@ -3,7 +3,7 @@
 (function () {
   "use strict";
   var $ = function (s) { return document.querySelector(s); };
-  var SCREEN = { dietitian: "dietitian.html", kitchen: "kitchen.html", admin: "admin.html" };
+  var SCREEN = { dietitian: "/app/dietitian.html", kitchen: "/app/kitchen.html", admin: "/app/admin.html" };
   var client;
 
   function setup() {
@@ -64,7 +64,7 @@
     setup().then(function () {
       return client.auth.getSession().then(function (s) { return s.data.session ? profile() : null; });
     }).then(function (p) {
-      if (!p) return location.replace("index.html");
+      if (!p) return location.replace("/app/");
       if (p.role !== role) return location.replace(SCREEN[p.role]);
       $("#who-name").textContent = p.name;
       document.body.hidden = false;
@@ -72,10 +72,10 @@
       return Promise.all(counts.map(function (c) { return count(c[0]); })).then(function (n) {
         $("#tiles").innerHTML = counts.map(function (c, i) { return '<div class="tile"><b>' + n[i] + "</b><span>" + c[1] + "</span></div>"; }).join("");
       });
-    }).catch(function () { location.replace("index.html"); });
+    }).catch(function () { location.replace("/app/"); });
 
     $("#signout").addEventListener("click", function () {
-      client.auth.signOut().then(function () { location.replace("index.html"); });
+      client.auth.signOut().then(function () { location.replace("/app/"); });
     });
   }
 

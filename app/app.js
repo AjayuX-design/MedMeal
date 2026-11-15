@@ -42,7 +42,7 @@
       var picked = document.querySelector("input[name=role]:checked");
       if (!picked) { btn.disabled = false; return fail("Please choose your role first."); }
       client.auth.signInWithPassword({ email: $("#email").value.trim(), password: $("#password").value }).then(function (r) {
-        if (r.error) throw new Error("bad login");
+        if (r.error) throw new Error(r.error.status === 400 || r.error.status === 422 ? "bad login" : "network");
         return profile();
       }).then(function (p) {
         if (!p) throw new Error("no role");
@@ -54,6 +54,7 @@
         client.auth.signOut();
         var m = String(err.message);
         fail(m === "no role" ? "This account has no role yet. Please ask the admin."
+          : m === "network" || err instanceof TypeError ? "Could not reach the sign in service. Check your connection and try again. If it keeps happening, tell Pixxel Nesst."
           : m.indexOf("wrong role:") === 0 ? "This is a " + m.slice(11) + " account. Please choose " + m.slice(11) + " above."
           : "The email or password is not right. Please try again.");
       });

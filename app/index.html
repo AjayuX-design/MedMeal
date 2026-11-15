@@ -12,23 +12,43 @@
 <link rel="stylesheet" href="/app/app.css">
 </head>
 <body>
-<main class="login">
-  <p class="brand">MedMeal <span>Staff</span></p>
-  <h1>Sign in</h1>
-  <p>Choose your role, then use the email and password you were given.</p>
-  <p class="msg" id="msg" role="alert"></p>
-  <form id="login-form" novalidate>
-    <fieldset class="roles">
-      <legend>Who are you?</legend>
-      <label class="role"><input type="radio" name="role" value="dietitian" required><span>Dietitian</span></label>
-      <label class="role"><input type="radio" name="role" value="kitchen"><span>Kitchen</span></label>
-      <label class="role"><input type="radio" name="role" value="admin"><span>Admin</span></label>
-    </fieldset>
-    <label class="field"><span>Email</span><input id="email" type="email" autocomplete="username" required></label>
-    <label class="field"><span>Password</span><input id="password" type="password" autocomplete="current-password" required></label>
-    <button class="btn" id="login-btn" type="submit">Sign in</button>
-  </form>
-</main>
+<div class="auth">
+  <aside class="auth__brand">
+    <div class="auth__logo"><img src="/favicon-32.png" width="40" height="40" alt=""><span class="brand">MedMeal</span></div>
+    <div class="auth__pitch">
+      <h1>Staff app</h1>
+      <p>One place for bookings, feed plans and kitchen orders.</p>
+      <ul class="auth__list">
+        <li><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg></span><div><b>Dietitian</b>Reviews bookings and builds feed plans</div></li>
+        <li><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg></span><div><b>Kitchen</b>Prepares, packs and labels orders</div></li>
+        <li><span><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.4 8.4 8 9 4.6-.6 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span><div><b>Admin</b>Tracks payments, enquiries and deliveries</div></li>
+      </ul>
+    </div>
+    <p class="auth__foot">Private. For MedMeal staff only.</p>
+  </aside>
+
+  <main class="auth__main">
+    <div class="login">
+      <h2>Welcome back</h2>
+      <p class="login__sub">Choose your role, then sign in.</p>
+      <p class="msg" id="msg" role="alert"></p>
+      <form id="login-form" novalidate>
+        <fieldset class="roles">
+          <legend>I am the</legend>
+          <label class="role"><input type="radio" name="role" value="dietitian" required><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>Dietitian</span></label>
+          <label class="role"><input type="radio" name="role" value="kitchen"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>Kitchen</span></label>
+          <label class="role"><input type="radio" name="role" value="admin"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.4 8.4 8 9 4.6-.6 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>Admin</span></label>
+        </fieldset>
+        <label class="field"><span>Email</span><input id="email" type="email" autocomplete="username" required></label>
+        <label class="field"><span>Password</span>
+          <span class="pw"><input id="password" type="password" autocomplete="current-password" required><button class="pw__toggle" id="pw-toggle" type="button" aria-pressed="false">Show</button></span>
+        </label>
+        <button class="btn btn--block" id="login-btn" type="submit">Sign in</button>
+      </form>
+      <p class="login__help">Forgot your password? Ask the MedMeal admin to reset it.</p>
+    </div>
+  </main>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="/app/app.js"></script>
 </body>

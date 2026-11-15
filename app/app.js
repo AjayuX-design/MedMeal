@@ -29,6 +29,13 @@
       if (p && SCREEN[p.role]) location.replace(SCREEN[p.role]);
     }).catch(function () { fail("Sign in is not set up yet. Please ask Pixxel Nesst."); });
 
+    $("#pw-toggle").addEventListener("click", function () {
+      var show = $("#password").type === "password";
+      $("#password").type = show ? "text" : "password";
+      this.textContent = show ? "Hide" : "Show";
+      this.setAttribute("aria-pressed", show);
+    });
+
     // Pre-pick the role this device used last (or ?role=kitchen in the link).
     var last = new URLSearchParams(location.search).get("role");
     try { last = last || localStorage.getItem("mm_role"); } catch (e) {}

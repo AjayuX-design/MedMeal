@@ -1,12 +1,12 @@
 // Dietitian call times. Not a route. Everything in India time (IST, no daylight saving).
 // Change the rules here and nowhere else.
 const CFG = {
-  open: 7, close: 19,        // calls run 7 am to 7 pm, so the last 30 minute slot starts at 6:30 pm
-  minutes: 30,               // length of one call slot
+  open: 7, close: 19,        // calls run 7 am to 7 pm, so the last 1 hour slot starts at 6 pm
+  minutes: 60,               // length of one call slot
   days: 7,                   // how many days ahead a patient can choose from
   noticeMin: 120,            // nothing sooner than 2 hours from now
   holdMin: 15,               // a started but unpaid booking keeps its slot for 15 minutes
-  closedWeekdays: [],        // days with no calls, 0 = Sunday ... 6 = Saturday. Working days are not confirmed yet.
+  closedWeekdays: [],        // days with no calls, 0 = Sunday ... 6 = Saturday. None: Sunday is open too.
 };
 const IST = 330 * 6e4, DAY = 864e5, MIN = 6e4;
 const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], MO = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

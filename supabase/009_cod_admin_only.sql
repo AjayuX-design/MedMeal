@@ -1,10 +1,10 @@
--- MedMeal Starter: payment options are for the Admin and the dietitian only (never the kitchen).
--- Run once in the Supabase SQL editor, after 008. The dietitian can now confirm cash on delivery, like the Admin.
--- Marking an order Delivered stays with the Admin.
+-- MedMeal Starter: only the Admin decides cash on delivery.
+-- Run once in the Supabase SQL editor, after 008. It is safe to run even if you ran an earlier 009.
+-- (The server already refuses anyone but the Admin. This makes the database refuse too.)
 create or replace function staff_confirm_cod(p_actor uuid, p_order uuid, p_amount int) returns boolean
 language plpgsql security definer set search_path = public as $$
 begin
-  if not exists (select 1 from staff where id = p_actor and active and role in ('admin', 'dietitian')) then
+  if not exists (select 1 from staff where id = p_actor and active and role = 'admin') then
     raise exception 'not allowed';
   end if;
   if p_amount is null or p_amount < 1 or p_amount > 1000000 then

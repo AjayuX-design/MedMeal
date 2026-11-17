@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="favicon.ico?v=2" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=2">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=2">
+<title>Delivery address | MedMeal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script>document.documentElement.classList.add("js")</script>
+<script src="js/main.js" defer></script>
+<script src="js/address.js" defer></script>
+</head>
+<body>
+<div id="site-header"></div>
+<main id="main">
+
+<section class="page-head"><div class="container">
+  <h1>Delivery address</h1>
+  <p class="lead">Tell us where to deliver the feed. It takes about a minute.</p>
+</div></section>
+<section class="section section--tight"><div class="container">
+  <div class="form-card narrow">
+    <div id="addr-state"></div>
+    <form id="addr-form" novalidate hidden>
+      <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <p class="alert alert--info" id="addr-for"></p>
+      <p class="req-note">Fields marked <span class="req">*</span> are mandatory.</p>
+      <div class="field"><label for="a-name">Name of the person receiving the delivery <span class="req">*</span></label><input id="a-name" name="name" type="text" autocomplete="name" required></div>
+      <div class="field"><label for="a-mobile">Mobile number <span class="req">*</span></label><input id="a-mobile" name="mobile" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876543210" required></div>
+      <div class="field"><label for="a-line1">House or flat number and street <span class="req">*</span></label><input id="a-line1" name="line1" type="text" autocomplete="address-line1" required></div>
+      <div class="field"><label for="a-area">Area or locality <span class="req">*</span></label><input id="a-area" name="area" type="text" autocomplete="address-line2" required></div>
+      <div class="field-row">
+        <div class="field"><label for="a-city">City <span class="req">*</span></label><input id="a-city" name="city" type="text" autocomplete="address-level2" value="Vijayawada" required></div>
+        <div class="field"><label for="a-pincode">Pincode <span class="req">*</span></label><input id="a-pincode" name="pincode" type="text" inputmode="numeric" maxlength="6" autocomplete="postal-code" placeholder="520010" required></div>
+      </div>
+      <div class="field"><label for="a-landmark">Landmark <span class="opt">(optional)</span></label><input id="a-landmark" name="landmark" type="text"></div>
+      <div class="field"><label for="a-notes">Delivery notes <span class="opt">(optional)</span></label><input id="a-notes" name="notes" type="text" placeholder="For example, best time to deliver"></div>
+      <p class="alert alert--error" id="addr-error" role="alert" hidden></p>
+      <div class="actions"><button class="btn btn--primary btn--lg" type="submit" id="addr-btn">Save address</button></div>
+    </form>
+    <div id="addr-done" hidden>
+      <div class="success"><div class="tick"><i data-i="check"></i></div><h2>Thank you</h2><p class="lead">We have your address. Our dietitian will check it and call you back if anything is unclear.</p></div>
+      <div class="summary"><dl><dt>Name</dt><dd id="done-name"></dd><dt>Address</dt><dd id="done-addr"></dd></dl></div>
+      <p class="fine">Made a mistake? Open the same link again and send the address once more, until we confirm it.</p>
+    </div>
+  </div>
+  <p class="narrow help-line">Need help? <a data-call href="#">Call us</a> or <a data-wa href="#">WhatsApp us</a>.</p>
+</div></section>
+
+</main>
+<div id="site-footer"></div>
+</body>
+</html>

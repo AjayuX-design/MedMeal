@@ -220,6 +220,10 @@ tr.is-click:focus-visible { outline-offset: -3px; }
 .btn, .nav a, .iconbtn, .seg__btn, .day, tr.is-click, .pw__toggle { transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s; }
 .btn:active:not([disabled]) { transform: translateY(1px); }
 @media (prefers-reduced-motion: reduce) { .btn, .nav a, .iconbtn, .seg__btn, tr.is-click { transition: none; } }
+.act-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.act-row .btn { min-height: 44px; }
+#at-msg:not(:empty) { margin-top: 12px; }
+.copybox { width: 100%; margin-top: 8px; min-height: 40px; padding: 0 12px; border: 1px solid var(--input); border-radius: 12px; font: 400 13px/20px ui-monospace, Menlo, monospace; color: var(--ink); }
 @keyframes slide { from { transform: translateX(32px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .drawer, .skel i { animation: none; } }
 

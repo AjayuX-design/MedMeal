@@ -112,10 +112,11 @@
     call_st: { new: ["info", "New"], called: ["ok", "Called"], closed: ["muted", "Closed"] },
     progress: { new: ["info", "New"], contacted: ["ok", "Contacted"], sent_to_dietitian: ["muted", "Sent to dietitian"] },
     pstat: { created: ["muted", "Started"], paid: ["ok", "Paid"], failed: ["bad", "Failed"] },
+    astat: { none: ["warn", "Not received"], submitted: ["info", "To confirm"], confirmed: ["ok", "Confirmed"] },
     ostat: { new: ["info", "Waiting"], preparing: ["warn", "Preparing"], prepared: ["info", "Prepared"], packed: ["ok", "Packed"], delivered: ["muted", "Delivered"] }
   };
   var KIND = { contact: "Contact form", hospital: "Hospital enquiry", not_sure: "Not sure yet" };
-  var TABLE_NAME = { cases: "a booking", payments: "a payment", enquiries: "an enquiry", staff: "a staff member", reports: "a report", orders: "an order" };
+  var TABLE_NAME = { cases: "a booking", payments: "a payment", enquiries: "an enquiry", staff: "a staff member", reports: "a report", orders: "an order", delivery_addresses: "a delivery address" };
   var COLUMN = { consult_payment: "Payment", call_status: "Call status", progress: "Progress", status: "Status", paid_at: "Paid time" };
 
   function what(r) {
@@ -162,6 +163,10 @@
     ["#", "Health"], ["Health notes", "notes", "long"], ["Reports shared", "report_names", "long"]
   ];
   var BOOKING_HERO = { badges: [["consult_payment", "pay"], ["call_status", "call_st"]], time: "slot_at", type: "call_type" };
+  var ORDER_DETAIL = [
+    ["#", "Order"], ["Order number", "order_no", "code"], ["Case", "case_no", "code"], ["Quantity", "quantity"], ["Created", "created_at", "date"],
+    ["#", "Delivery address"], ["Deliver to", "addr_name", "strong"], ["Mobile", "addr_mobile", "tel"], ["Address", "addr_text", "long"], ["Delivery notes", "addr_notes", "long"]
+  ];
   var V = {
     // Dietitian
     dietitian_bookings: {
@@ -203,10 +208,19 @@
       cols: [["When", "at", "date"], ["Who", "actor_role", "who"], ["What changed", "action", "what"]],
       empty: ["No activity yet", "Changes to bookings, payments and enquiries are recorded here."]
     },
-    orders: {
-      title: "Orders", sub: "Where every feed order is in the kitchen.", source: "admin_orders", titleKey: "order_no",
+    dietitian_orders: {
+      title: "Orders", sub: "Feed orders. Confirm the delivery address once the family has sent it.", source: "dietitian_orders", titleKey: "patient_name", subKey: "order_no",
       search: "Search by order, case number or patient",
-      cols: [["Order", "order_no", "code"], ["Patient", "patient_name", "strong"], ["Case", "case_no", "code"], ["Quantity", "quantity"], ["Status", "status", "ostat"], ["Updated", "updated_at", "date"]],
+      cols: [["Order", "order_no", "code"], ["Patient", "patient_name", "strong"], ["Status", "status", "ostat"], ["Address", "addr_status", "astat"], ["Updated", "updated_at", "date"]],
+      filter: ["addr_status", "All addresses", [["none", "Not received"], ["submitted", "To confirm"], ["confirmed", "Confirmed"]]],
+      detail: ORDER_DETAIL, hero: { badges: [["status", "ostat"], ["addr_status", "astat"]] }, addressTools: true,
+      empty: ["No orders yet", "Feed orders appear here once a family has paid for a feed plan."]
+    },
+    orders: {
+      title: "Orders", sub: "Where every feed order is, and its delivery address.", source: "admin_orders", titleKey: "patient_name", subKey: "order_no",
+      detail: ORDER_DETAIL, hero: { badges: [["status", "ostat"], ["addr_status", "astat"]] }, addressTools: true,
+      search: "Search by order, case number or patient",
+      cols: [["Order", "order_no", "code"], ["Patient", "patient_name", "strong"], ["Quantity", "quantity"], ["Status", "status", "ostat"], ["Address", "addr_status", "astat"], ["Updated", "updated_at", "date"]],
       filter: ["status", "All statuses", [["new", "Waiting"], ["preparing", "Preparing"], ["prepared", "Prepared"], ["packed", "Packed"], ["delivered", "Delivered"]]],
       empty: ["No orders yet", "Feed orders appear here once a family has paid for a feed plan."]
     },
@@ -219,7 +233,7 @@
     enquiries: [["Name", "name", "strong"], ["Progress", "progress", "progress"], ["Received", "created_at", "date"]]
   };
   var NAV = {
-    dietitian: [["bookings", "Bookings", "bookings", "dietitian_bookings"]],
+    dietitian: [["bookings", "Bookings", "bookings", "dietitian_bookings"], ["orders", "Orders", "orders", "dietitian_orders"]],
     kitchen: [["orders", "Orders", "orders", "kitchen_orders"]],
     admin: [["overview", "Overview", "overview"], ["bookings", "Bookings", "bookings", "bookings"], ["orders", "Orders", "orders", "orders"], ["enquiries", "Enquiries", "enquiries", "enquiries"], ["payments", "Payments", "payments", "payments"], ["activity", "Activity", "activity", "activity"]]
   };
@@ -234,7 +248,12 @@
       return r.data || [];
     });
   }
+  function withAddress(rows) {
+    rows.forEach(function (r) { r.addr_text = r.addr_line1 ? [r.addr_line1, r.addr_area, r.addr_city + " " + r.addr_pincode, r.addr_landmark ? "Landmark: " + r.addr_landmark : ""].filter(Boolean).join("\n") : null; });
+    return rows;
+  }
   function rowsFor(v) {
+    if (/_orders$/.test(v.source)) return load(v.source, v.orderBy).then(withAddress);
     if (v.source !== "admin_payments") return load(v.source, v.orderBy);
     return Promise.all([load("admin_payments"), load("admin_cases")]).then(function (d) {
       var by = {};
@@ -396,10 +415,46 @@
         if (x[0] === "#") return '<h3 class="kv__h">' + esc(x[1]) + "</h3>";
         return '<div class="' + (x[2] === "long" ? "kv__wide" : "") + '"><dt>' + esc(x[0]) + '</dt><dd data-k="' + x[1] + '">' + cell(x[2], row[x[1]], row) + "</dd></div>";
       }).join("") + "</dl>";
+      if (v.addressTools) showAddressTools(row, redraw);
       if (v.callStatus) showCallStatus(row, redraw);
       if (v.reports) showReports(row);
       $("#scrim").hidden = false; d.hidden = false;
       $("#drawer-close").focus();
+    }
+    // After the feed payment, a staff member sends the family a private link to add the address. The dietitian confirms it.
+    function showAddressTools(row, redraw) {
+      var canConfirm = role === "dietitian" && row.addr_status === "submitted", canLink = row.addr_status !== "confirmed";
+      if (!canConfirm && !canLink) return;
+      $("#drawer-body").insertAdjacentHTML("beforeend", '<section class="sec" id="at"><h3>Address actions</h3><div class="act-row">' +
+        (canConfirm ? '<button class="btn" type="button" data-a="confirm">Confirm address</button>' : "") +
+        (canLink ? '<button class="btn btn--quiet" type="button" data-a="link">Copy address link</button>' : "") + '</div><div id="at-msg" aria-live="polite"></div></section>');
+      var box = $("#at"), msg = $("#at-msg");
+      box.onclick = function (e) {
+        var b = e.target.closest("button[data-a]"); if (!b || b.disabled) return;
+        var all = box.querySelectorAll("button"); all.forEach(function (x) { x.disabled = true; });
+        var link = b.getAttribute("data-a") === "link";
+        post(link ? "/api/address-link" : "/api/address-confirm", { order_id: row.id }).then(function (resp) {
+          if (!resp.ok) throw new Error("failed");
+          return resp.json();
+        }).then(function (d) {
+          if (link) {
+            return (navigator.clipboard ? navigator.clipboard.writeText(d.url) : Promise.reject()).then(function () {
+              msg.innerHTML = note("success", "Link copied. Send it to the family on WhatsApp once the feed is paid.");
+            }, function () {
+              msg.innerHTML = note("info", "Copy this link and send it to the family on WhatsApp:") + '<input class="copybox" readonly value="' + esc(d.url) + '" aria-label="Address link">';
+              $(".copybox").select();
+            });
+          }
+          row.addr_status = "confirmed"; row.addr_confirmed_at = new Date().toISOString();
+          var hb = $(".hero__badges"); if (hb) hb.innerHTML = cell("ostat", row.status, row) + cell("astat", "confirmed", row);
+          var cb = box.querySelector('[data-a="confirm"]'); if (cb) cb.remove();
+          var lb = box.querySelector('[data-a="link"]'); if (lb) lb.remove();
+          if (redraw) redraw();
+          msg.innerHTML = note("success", "Address confirmed.");
+        }).catch(function () {
+          msg.innerHTML = note("error", "Could not do that. Please try again.");
+        }).then(function () { all.forEach(function (x) { x.disabled = false; }); });
+      };
     }
     // The dietitian marks the call: New, Called or Closed. The server checks who is asking and records the change.
     function showCallStatus(row, redraw) {

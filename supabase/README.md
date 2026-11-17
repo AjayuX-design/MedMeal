@@ -24,6 +24,7 @@ select id, 'FO-TEST-001', '1200 ml a day',
 from cases where consult_payment = 'paid' order by paid_at desc limit 1;
 ```
 
-12. Redeploy, then open `/app` on the site and sign in.
+12. Run `007_address.sql`. It adds the delivery address: the family sends it on a private page after the feed payment, the dietitian confirms it, and the dietitian and Admin see it. The kitchen never does. Until the feed payment flow exists, the dietitian or Admin makes the private link in the Orders panel (**Copy address link**) and sends it to the family on WhatsApp once the feed is paid.
+13. Redeploy, then open `/app` on the site and sign in.
 
 Until step 7 is done, the website works exactly as before and the staff screens say sign in is not set up.

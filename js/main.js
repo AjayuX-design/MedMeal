@@ -52,6 +52,9 @@
   function icon(name, cls) {
     return '<svg class="icon' + (cls ? " " + cls : "") + '" aria-hidden="true" viewBox="0 0 24 24"><use href="#i-' + name + '"/></svg>';
   }
+  // One look for messages: success, error, warning or info.
+  var ALERT_ICON = { success: "check", error: "alert", warning: "alert", info: "info" };
+  function alertHTML(type, msg) { return '<p class="alert alert--' + type + '" role="' + (type === "error" ? "alert" : "status") + '">' + icon(ALERT_ICON[type]) + "<span>" + msg + "</span></p>"; }
   function sprite() {
     var s = '<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0" aria-hidden="true"><defs>';
     Object.keys(ICONS).forEach(function (k) { s += '<symbol id="i-' + k + '" viewBox="0 0 24 24">' + ICONS[k] + "</symbol>"; });
@@ -274,8 +277,8 @@
           form.reset();
         }).catch(function (err) {
           console.warn("Form could not be sent:", err && err.message);
-          var p = document.createElement("p"); p.className = "field-error form-fail is-shown"; p.setAttribute("role", "alert");
-          p.innerHTML = icon("alert") + "<span>We could not send this. Please try again, or call us.</span>";
+          var p = document.createElement("p"); p.className = "alert alert--error form-fail"; p.setAttribute("role", "alert");
+          p.innerHTML = icon(ALERT_ICON.error) + "<span>We could not send this. Please try again, or call us.</span>";
           btn.parentNode.insertBefore(p, btn);
         }).then(function () { btn.textContent = label; refresh(); });
       });
@@ -295,7 +298,7 @@
     function chosen() { return ($('input[name="consult"]:checked', form) || {}).value || "unsure"; }
     function updatePay() {
       var c = chosen(), amt = AMOUNTS[c], note = $("#pay-note"), btn = $("#submit-btn"), err = $("#pay-error");
-      if (err) { err.classList.remove("is-shown"); err.textContent = ""; }
+      if (err) { err.hidden = true; err.textContent = ""; }
       if (note) { note.hidden = !amt; var line = $("#pay-line"); if (line && amt) line.textContent = "You will pay \u20B9" + amt + " securely with Razorpay."; }
       if (btn) btn.textContent = amt ? "Pay \u20B9" + amt + " and confirm" : "Send request";
     }
@@ -304,7 +307,7 @@
       var sc = document.createElement("script"); sc.src = "https://checkout.razorpay.com/v1/checkout.js"; sc.async = true;
       sc.onload = cb; sc.onerror = fail; document.head.appendChild(sc);
     }
-    function payError(msg) { var e = $("#pay-error"); if (!e) return; e.innerHTML = icon("alert") + "<span>" + msg + "</span>"; e.classList.add("is-shown"); }
+    function payError(msg) { var e = $("#pay-error"); if (!e) return; e.innerHTML = icon(ALERT_ICON.error) + "<span>" + msg + "</span>"; e.hidden = false; }
     function show(n, initial) {
       cur = n;
       steps.forEach(function (s, i) { s.hidden = i !== n; });
@@ -364,8 +367,8 @@
     function finish(payId, ref, notified, failed) {
       var c = chosen(), sum = $("#summary"), sent = picked.length - (failed || []).length;
       sum.innerHTML = "<dl>" + (ref ? "<dt>Reference</dt><dd>" + esc(ref) + "</dd>" : "") + "<dt>Consultation</dt><dd>" + NAMES[c] + "</dd><dt>Patient</dt><dd>" + esc($("#patient").value) + "</dd><dt>Contact</dt><dd>" + esc($("#phone").value) + "</dd>" + (payId ? "<dt>Payment</dt><dd>\u20B9" + AMOUNTS[c] + " paid<br><small class=\"muted\">ID " + esc(payId) + "</small></dd>" : "") + (payId && picked.length ? "<dt>Reports</dt><dd>" + (failed && failed.length ? sent + " of " + picked.length + " uploaded" : sent + (sent === 1 ? " file" : " files") + " uploaded") + "</dd>" : "") + "</dl>";
-      if (failed && failed.length) sum.insertAdjacentHTML("beforeend", '<p class="upload-note" role="status"><strong>Note:</strong> ' + failed.map(esc).join(", ") + " did not upload. Our dietitian will ask for " + (failed.length === 1 ? "it" : "them") + " when they call you back.</p>");
-      if (notified === false) sum.insertAdjacentHTML("beforeend", '<p class="field-error is-shown" role="alert">' + icon("alert") + "<span>We could not pass your details to our team. Please call us and quote reference " + esc(ref || "") + " (payment ID " + esc(payId) + ").</span></p>");
+      if (failed && failed.length) sum.insertAdjacentHTML("beforeend", alertHTML("info", "<strong>Note:</strong> " + failed.map(esc).join(", ") + " did not upload. Our dietitian will ask for " + (failed.length === 1 ? "it" : "them") + " when they call you back."));
+      if (notified === false) sum.insertAdjacentHTML("beforeend", alertHTML("error", "We could not pass your details to our team. Please call us and quote reference " + esc(ref || "") + " (payment ID " + esc(payId) + ")."));
       $("#thanks-name").textContent = $("#contact-name").value.trim().split(" ")[0];
       $("#form-wrap").hidden = true; $("#thanks").hidden = false;
       var h = $("#thanks h2"); h.setAttribute("tabindex", "-1"); h.focus();
@@ -418,7 +421,7 @@
     form.addEventListener("submit", function (e) {
       e.preventDefault();
       if (!validate(steps[cur])) return;
-      var c = chosen(), err = $("#pay-error"); if (err) err.classList.remove("is-shown");
+      var c = chosen(), err = $("#pay-error"); if (err) err.hidden = true;
       if (AMOUNTS[c]) pay(c); else sendRequest();
     });
     show(0, true);

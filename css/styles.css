@@ -375,7 +375,16 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 .summary { text-align: left; background: var(--w3); border-radius: 16px; padding: 24px; margin: 24px auto; max-width: 440px; }
 .summary dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; }
 .summary dt { color: var(--muted); }
-.upload-note { margin: 16px 0 0; padding: 12px 16px; background: #FFF1D6; border-radius: 12px; color: var(--ink); font-size: 14px; line-height: 20px; }
+/* Messages: success, error, warning, info. One look everywhere. */
+.alert { display: flex; align-items: flex-start; gap: 12px; margin: 0; padding: 12px 16px; border: 1px solid transparent; border-radius: 12px; font-size: 14px; line-height: 20px; font-weight: 500; }
+.alert[hidden] { display: none; }
+.alert .icon { margin-top: 0; }
+.alert--success { background: var(--mint); border-color: #CBE5D6; color: var(--green-text); }
+.alert--error { background: var(--error-tint); border-color: #F2C9C3; color: var(--error); }
+.alert--warning { background: #FFF1D6; border-color: #F0D49A; color: #7A4B00; }
+.alert--info { background: var(--w1); border-color: var(--line); color: var(--ink); }
+.alert--info .icon { color: var(--green-text); }
+.summary > .alert { margin-top: 16px; text-align: left; }
 .summary dd { margin: 0; color: var(--ink); font-weight: 500; word-break: break-word; }
 .inline-success { display: none; align-items: center; gap: 12px; padding: 16px 24px; margin-top: 24px; background: var(--mint); color: var(--ink); border-radius: 16px; font-weight: 500; }
 .inline-success.is-shown { display: flex; }
@@ -743,4 +752,4 @@ legend[tabindex="-1"]:focus { outline: none; }
 .btn:disabled:hover, .btn[disabled]:hover { background: var(--line); color: #6B7A72; }
 
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
-form .field-error.form-fail { white-space: normal; margin: 0 0 12px; }
+form .form-fail { margin: 0 0 12px; }

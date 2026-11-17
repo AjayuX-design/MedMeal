@@ -375,7 +375,7 @@ input[aria-invalid="true"], select[aria-invalid="true"], textarea[aria-invalid="
 .summary { text-align: left; background: var(--w3); border-radius: 16px; padding: 24px; margin: 24px auto; max-width: 440px; }
 .summary dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; }
 .summary dt { color: var(--muted); }
-.summary > p { margin: 16px 0 0; }
+.upload-note { margin: 16px 0 0; padding: 12px 16px; background: #FFF1D6; border-radius: 12px; color: var(--ink); font-size: 14px; line-height: 20px; }
 .summary dd { margin: 0; color: var(--ink); font-weight: 500; word-break: break-word; }
 .inline-success { display: none; align-items: center; gap: 12px; padding: 16px 24px; margin-top: 24px; background: var(--mint); color: var(--ink); border-radius: 16px; font-weight: 500; }
 .inline-success.is-shown { display: flex; }

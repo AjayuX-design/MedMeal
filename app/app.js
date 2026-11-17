@@ -148,7 +148,7 @@
       search: "Search by name, case number or mobile",
       cols: [["Case", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Feeding route", "feeding_route"], ["Mobile", "mobile", "phone"], ["Call", "call_type", "call"], ["Call status", "call_status", "call_st"], ["Paid", "paid_at", "date"]],
       filter: ["call_status", "All call statuses", [["new", "New"], ["called", "Called"], ["closed", "Closed"]]],
-      detail: BOOKING_DETAIL, empty: ["No paid bookings yet", "When a family pays for a consultation, the booking appears here."]
+      detail: BOOKING_DETAIL, reports: true, empty: ["No paid bookings yet", "When a family pays for a consultation, the booking appears here."]
     },
     // Admin
     bookings: {
@@ -232,7 +232,7 @@
 
   // ---------------------------------------------------------------- Role screens
   function screen(role) {
-    var profileRow, view, token = 0, opener;
+    var profileRow, view, token = 0, opener, reportToken = 0;
     var nav = NAV[role];
 
     function route() {
@@ -318,9 +318,35 @@
       $("#drawer-body").innerHTML = '<dl class="kv">' + v.detail.map(function (x) {
         return "<div><dt>" + esc(x[0]) + "</dt><dd>" + cell(x[2], row[x[1]], row) + "</dd></div>";
       }).join("") + "</dl>";
+      if (v.reports) showReports(row);
       $("#scrim").hidden = false; d.hidden = false;
       $("#drawer-close").focus();
     }
+    // The patient's uploaded reports. Each opens through a short-lived private link made on click.
+    function showReports(row) {
+      var body = $("#drawer-body"), mine = ++reportToken;
+      body.insertAdjacentHTML("beforeend", '<section class="reports"><h3>Reports</h3><div id="rep-list"><p class="none">Loading</p></div></section>');
+      client.from("dietitian_reports").select("*").eq("case_id", row.id).order("created_at", { ascending: true }).then(function (r) {
+        if (mine !== reportToken) return;
+        var list = $("#rep-list");
+        if (r.error) { list.innerHTML = '<p class="none">Could not load the reports.</p>'; return; }
+        if (!r.data.length) { list.innerHTML = '<p class="none">No reports uploaded.</p>'; return; }
+        list.innerHTML = "<ul>" + r.data.map(function (f, i) {
+          return '<li><span class="fn">' + esc(f.file_name) + '</span><span class="fs">' + fileSize(f.size_bytes) + '</span><button class="btn btn--quiet" type="button" data-i="' + i + '">Open</button></li>';
+        }).join("") + "</ul>";
+        list.onclick = function (e) {
+          var b = e.target.closest("button[data-i]"); if (!b) return;
+          var f = r.data[+b.dataset.i], w = window.open("", "_blank"); // opened first so the browser allows it
+          b.disabled = true;
+          client.storage.from("reports").createSignedUrl(f.path, 120).then(function (x) {
+            b.disabled = false;
+            if (x.data && x.data.signedUrl && w) w.location = x.data.signedUrl;
+            else { if (w) w.close(); b.textContent = "Not found"; }
+          });
+        };
+      });
+    }
+    function fileSize(b) { return b == null ? "" : b < 1048576 ? Math.max(1, Math.round(b / 1024)) + " KB" : (b / 1048576).toFixed(1) + " MB"; }
     function closeDrawer() {
       if ($("#drawer").hidden) return;
       $("#drawer").hidden = true; $("#scrim").hidden = true;

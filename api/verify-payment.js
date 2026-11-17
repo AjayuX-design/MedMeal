@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const { configured, text, lines, send } = require("./_notify");
 const { cleanBooking } = require("./_booking");
 const db = require("./_db");
+const token = require("./_token");
 
 const LABELS = { 79900: "Video call", 49900: "Phone call" }; // by amount in paise
 
@@ -41,7 +42,7 @@ module.exports = async (req, res) => {
     } catch (e) { /* the email says the reference could not be confirmed */ }
   }
 
-  let saved = false;
+  let saved = false, upload = null;
   if (dbOn) {
     const now = new Date().toISOString();
     let pay = await db.find("payments", "razorpay_order_id", String(order));
@@ -63,6 +64,7 @@ module.exports = async (req, res) => {
       const a = await db.update("payments", "razorpay_order_id", String(order), { status: "paid", razorpay_payment_id: String(payment), paid_at: now });
       const c = await db.update("cases", "id", caseId, { consult_payment: "paid", paid_at: now });
       saved = a && c;
+      if (saved) upload = token.make(caseId); // lets this paid booking upload its reports for the next two hours
     }
     if (!saved) console.error("payment not saved in the database for order", String(order), "payment", String(payment));
   }
@@ -85,5 +87,5 @@ module.exports = async (req, res) => {
     if (!sent.ok) console.error("email failed for paid order", String(order), sent.error);
   }
 
-  return res.status(200).json({ ok: true, payment_id: String(payment), saved, notified: saved || emailed });
+  return res.status(200).json({ ok: true, payment_id: String(payment), saved, notified: saved || emailed, upload });
 };

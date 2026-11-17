@@ -32,8 +32,33 @@ async function find(table, col, val) {
   return r.ok && Array.isArray(r.data) ? r.data[0] || null : null;
 }
 
+// All rows where column equals value (null if the database cannot be reached).
+async function list(table, col, val) {
+  const r = await call("GET", table + "?" + col + "=eq." + q(val) + "&select=id");
+  return r.ok && Array.isArray(r.data) ? r.data : null;
+}
+
+// A one-time upload address for a private storage file, or null. The browser uploads straight to it.
+async function signUpload(bucket, path) {
+  try {
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY, root = base() + "/storage/v1";
+    const r = await fetch(root + "/object/upload/sign/" + bucket + "/" + path, {
+      method: "POST",
+      headers: { apikey: key, Authorization: "Bearer " + key, "Content-Type": "application/json" },
+      body: "{}",
+      signal: AbortSignal.timeout(8000),
+    });
+    const d = await r.json().catch(() => null);
+    if (!r.ok || !d) return null;
+    const token = d.token || new URL(root + d.url).searchParams.get("token");
+    return token ? root + "/object/upload/sign/" + bucket + "/" + path + "?token=" + encodeURIComponent(token) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 async function update(table, col, val, patch) {
   return (await call("PATCH", table + "?" + col + "=eq." + q(val), patch)).ok;
 }
 
-module.exports = { configured, insert, find, update };
+module.exports = { configured, insert, find, list, signUpload, update };

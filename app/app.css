@@ -156,6 +156,12 @@ tr.is-click:focus-visible { outline-offset: -3px; }
 .kv { margin: 0; display: grid; gap: 20px; }
 .kv dt { font-size: 12px; line-height: 16px; margin-bottom: 4px; }
 .kv dd { margin: 0; color: var(--ink); }
+.reports { margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--line); }
+.reports h3 { font: 800 16px/24px var(--head); color: var(--ink); margin: 0 0 12px; }
+.reports ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.reports li { display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border: 1px solid var(--line); border-radius: 12px; font-size: 14px; line-height: 20px; }
+.reports .fn { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.reports .fs { flex: none; }
 @keyframes slide { from { transform: translateX(32px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .drawer, .skel i { animation: none; } }
 

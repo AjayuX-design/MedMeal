@@ -342,9 +342,29 @@
       files.addEventListener("change", function () { Array.prototype.forEach.call(files.files, function (f) { picked.push(f); }); drawFiles(); });
       list.addEventListener("click", function (e) { var b = e.target.closest("button[data-rm]"); if (b) { picked.splice(+b.getAttribute("data-rm"), 1); drawFiles(); } });
     }
-    function finish(payId, ref, notified) {
-      var c = chosen(), sum = $("#summary");
-      sum.innerHTML = "<dl>" + (ref ? "<dt>Reference</dt><dd>" + esc(ref) + "</dd>" : "") + "<dt>Consultation</dt><dd>" + NAMES[c] + "</dd><dt>Patient</dt><dd>" + esc($("#patient").value) + "</dd><dt>Contact</dt><dd>" + esc($("#phone").value) + "</dd>" + (payId ? "<dt>Payment</dt><dd>\u20B9" + AMOUNTS[c] + " paid<br><small class=\"muted\">ID " + esc(payId) + "</small></dd>" : "") + "</dl>";
+    // Sends each report straight to private storage once the payment is confirmed. Never rejects: returns the names that did not go.
+    function uploadReports(pass, btn) {
+      var names = picked.map(function (f) { return f.name; });
+      if (!picked.length) return Promise.resolve([]);
+      if (!pass) return Promise.resolve(names);
+      return postJSON("/api/upload-url", { token: pass, files: picked.map(function (f) { return { name: f.name, size: f.size }; }) }).then(function (r) {
+        var list = r.files || [];
+        return list.reduce(function (chain, x, i) {
+          return chain.then(function (failed) {
+            if (!x.url) return failed.concat(names[i]);
+            btn.textContent = "Uploading reports (" + (i + 1) + " of " + picked.length + ")...";
+            var fd = new FormData(); fd.append("cacheControl", "3600"); fd.append("", picked[i]);
+            return fetch(x.url, { method: "PUT", headers: { "x-upsert": "false" }, body: fd })
+              .then(function (resp) { return resp.ok ? failed : failed.concat(names[i]); })
+              .catch(function () { return failed.concat(names[i]); });
+          });
+        }, Promise.resolve(names.slice(list.length)));
+      }).catch(function () { return names; });
+    }
+    function finish(payId, ref, notified, failed) {
+      var c = chosen(), sum = $("#summary"), sent = picked.length - (failed || []).length;
+      sum.innerHTML = "<dl>" + (ref ? "<dt>Reference</dt><dd>" + esc(ref) + "</dd>" : "") + "<dt>Consultation</dt><dd>" + NAMES[c] + "</dd><dt>Patient</dt><dd>" + esc($("#patient").value) + "</dd><dt>Contact</dt><dd>" + esc($("#phone").value) + "</dd>" + (payId ? "<dt>Payment</dt><dd>\u20B9" + AMOUNTS[c] + " paid<br><small class=\"muted\">ID " + esc(payId) + "</small></dd>" : "") + (payId && sent ? "<dt>Reports</dt><dd>" + sent + (sent === 1 ? " file" : " files") + " uploaded</dd>" : "") + "</dl>";
+      if (failed && failed.length) sum.insertAdjacentHTML("beforeend", '<p class="field-error is-shown" role="alert">' + icon("alert") + "<span>Your booking is confirmed, but we could not upload: " + failed.map(esc).join(", ") + ". Please keep them ready. Our dietitian will ask for them on the call.</span></p>");
       if (notified === false) sum.insertAdjacentHTML("beforeend", '<p class="field-error is-shown" role="alert">' + icon("alert") + "<span>We could not pass your details to our team. Please call us and quote reference " + esc(ref || "") + " (payment ID " + esc(payId) + ").</span></p>");
       $("#thanks-name").textContent = $("#contact-name").value.trim().split(" ")[0];
       $("#form-wrap").hidden = true; $("#thanks").hidden = false;
@@ -382,7 +402,7 @@
           theme: { color: "#2A8557" },
           handler: function (r) {
             btn.textContent = "Confirming payment...";
-            postJSON("/api/verify-payment", Object.assign({}, r, { details: details() })).then(function (v) { reset(); finish(r.razorpay_payment_id, order.receipt, v.notified); })
+            postJSON("/api/verify-payment", Object.assign({}, r, { details: details() })).then(function (v) { return uploadReports(v.upload, btn).then(function (failed) { reset(); finish(r.razorpay_payment_id, order.receipt, v.notified, failed); }); })
               .catch(function () { reset(); payError("We could not confirm your payment. If money was taken, please call us and quote payment ID " + esc(r.razorpay_payment_id) + "."); });
           },
           modal: { ondismiss: reset }

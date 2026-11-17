@@ -25,6 +25,14 @@ from cases where consult_payment = 'paid' order by paid_at desc limit 1;
 ```
 
 12. Run `007_address.sql`. It adds the delivery address: the family sends it on a private page after the feed payment, the dietitian confirms it, and the dietitian and Admin see it. The kitchen never does. Until the feed payment flow exists, the dietitian or Admin makes the private link in the Orders panel (**Copy address link**) and sends it to the family on WhatsApp once the feed is paid.
-13. Redeploy, then open `/app` on the site and sign in.
+13. Run `008_delivery.sql`. It adds the payment status of an order, cash on delivery, and Delivered. An order reaches the kitchen once it is paid online or the Admin has confirmed cash on delivery. The Admin marks a packed order Delivered, and for cash on delivery that records the cash received. Orders you added by hand before this step are counted as paid, so they stay on the kitchen board. A new test order starts as not paid. To try cash on delivery, add one and confirm it as Admin:
+
+```sql
+insert into orders (case_id, order_no, quantity, items, avoid)
+select id, 'FO-TEST-002', '1000 ml a day', '[{"name":"Rice gruel","qty":250,"unit":"g"}]'::jsonb, 'Potato'
+from cases where consult_payment = 'paid' order by paid_at desc limit 1;
+```
+
+14. Redeploy, then open `/app` on the site and sign in.
 
 Until step 7 is done, the website works exactly as before and the staff screens say sign in is not set up.

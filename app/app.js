@@ -113,6 +113,7 @@
     progress: { new: ["info", "New"], contacted: ["ok", "Contacted"], sent_to_dietitian: ["muted", "Sent to dietitian"] },
     pstat: { created: ["muted", "Started"], paid: ["ok", "Paid"], failed: ["bad", "Failed"] },
     astat: { none: ["warn", "Not received"], submitted: ["info", "To confirm"], confirmed: ["ok", "Confirmed"] },
+    paystat: { unpaid: ["warn", "Not paid"], online: ["ok", "Paid online"], cod: ["info", "Cash on delivery"], cash: ["ok", "Cash received"] },
     ostat: { new: ["info", "Waiting"], preparing: ["warn", "Preparing"], prepared: ["info", "Prepared"], packed: ["ok", "Packed"], delivered: ["muted", "Delivered"] }
   };
   var KIND = { contact: "Contact form", hospital: "Hospital enquiry", not_sure: "Not sure yet" };
@@ -165,6 +166,7 @@
   var BOOKING_HERO = { badges: [["consult_payment", "pay"], ["call_status", "call_st"]], time: "slot_at", type: "call_type" };
   var ORDER_DETAIL = [
     ["#", "Order"], ["Order number", "order_no", "code"], ["Case", "case_no", "code"], ["Quantity", "quantity"], ["Created", "created_at", "date"],
+    ["#", "Payment"], ["Payment", "pay_view", "paystat"], ["Amount", "amount", "rupee"], ["Delivered", "delivered_at", "date"],
     ["#", "Delivery address"], ["Deliver to", "addr_name", "strong"], ["Mobile", "addr_mobile", "tel"], ["Address", "addr_text", "long"], ["Delivery notes", "addr_notes", "long"]
   ];
   var V = {
@@ -211,16 +213,16 @@
     dietitian_orders: {
       title: "Orders", sub: "Feed orders. Confirm the delivery address once the family has sent it.", source: "dietitian_orders", titleKey: "patient_name", subKey: "order_no",
       search: "Search by order, case number or patient",
-      cols: [["Order", "order_no", "code"], ["Patient", "patient_name", "strong"], ["Status", "status", "ostat"], ["Address", "addr_status", "astat"], ["Updated", "updated_at", "date"]],
+      cols: [["Order", "order_no", "code"], ["Patient", "patient_name", "strong"], ["Status", "status", "ostat"], ["Payment", "pay_view", "paystat"], ["Address", "addr_status", "astat"], ["Updated", "updated_at", "date"]],
       filter: ["addr_status", "All addresses", [["none", "Not received"], ["submitted", "To confirm"], ["confirmed", "Confirmed"]]],
-      detail: ORDER_DETAIL, hero: { badges: [["status", "ostat"], ["addr_status", "astat"]] }, addressTools: true,
+      detail: ORDER_DETAIL, hero: { badges: [["status", "ostat"], ["pay_view", "paystat"], ["addr_status", "astat"]] }, addressTools: true,
       empty: ["No orders yet", "Feed orders appear here once a family has paid for a feed plan."]
     },
     orders: {
       title: "Orders", sub: "Where every feed order is, and its delivery address.", source: "admin_orders", titleKey: "patient_name", subKey: "order_no",
-      detail: ORDER_DETAIL, hero: { badges: [["status", "ostat"], ["addr_status", "astat"]] }, addressTools: true,
+      detail: ORDER_DETAIL, hero: { badges: [["status", "ostat"], ["pay_view", "paystat"], ["addr_status", "astat"]] }, addressTools: true, orderTools: true,
       search: "Search by order, case number or patient",
-      cols: [["Order", "order_no", "code"], ["Patient", "patient_name", "strong"], ["Quantity", "quantity"], ["Status", "status", "ostat"], ["Address", "addr_status", "astat"], ["Updated", "updated_at", "date"]],
+      cols: [["Order", "order_no", "code"], ["Patient", "patient_name", "strong"], ["Status", "status", "ostat"], ["Payment", "pay_view", "paystat"], ["Address", "addr_status", "astat"], ["Updated", "updated_at", "date"]],
       filter: ["status", "All statuses", [["new", "Waiting"], ["preparing", "Preparing"], ["prepared", "Prepared"], ["packed", "Packed"], ["delivered", "Delivered"]]],
       empty: ["No orders yet", "Feed orders appear here once a family has paid for a feed plan."]
     },
@@ -248,8 +250,9 @@
       return r.data || [];
     });
   }
+  function payView(r) { return r.cash_collected_at ? "cash" : r.pay_status === "cod" ? "cod" : r.pay_status === "paid" ? "online" : "unpaid"; }
   function withAddress(rows) {
-    rows.forEach(function (r) { r.addr_text = r.addr_line1 ? [r.addr_line1, r.addr_area, r.addr_city + " " + r.addr_pincode, r.addr_landmark ? "Landmark: " + r.addr_landmark : ""].filter(Boolean).join("\n") : null; });
+    rows.forEach(function (r) { r.pay_view = payView(r); r.addr_text = r.addr_line1 ? [r.addr_line1, r.addr_area, r.addr_city + " " + r.addr_pincode, r.addr_landmark ? "Landmark: " + r.addr_landmark : ""].filter(Boolean).join("\n") : null; });
     return rows;
   }
   function rowsFor(v) {
@@ -343,8 +346,8 @@
         }));
       }
       function overview() {
-        return Promise.all([load("admin_cases"), load("admin_enquiries"), load("admin_payments")]).then(guard(function (d) {
-          var cases = d[0], enq = d[1], pays = d[2];
+        return Promise.all([load("admin_cases"), load("admin_enquiries"), load("admin_payments"), load("admin_orders")]).then(guard(function (d) {
+          var cases = d[0], enq = d[1], pays = d[2], cash = d[3].reduce(function (t, o) { return t + (o.pay_status === "cod" && o.status !== "delivered" ? o.amount || 0 : 0); }, 0);
           var paid = cases.filter(function (c) { return c.consult_payment === "paid"; }).length;
           var open = cases.length - paid;
           var fresh = enq.filter(function (e) { return e.progress === "new"; }).length;
@@ -355,7 +358,7 @@
               (rows.length ? tableHTML(cols, rows.slice(0, 5), false) : '<p class="none pad">' + emptyText + "</p>") + "</section>";
           }
           content.innerHTML =
-            '<div class="stats">' + stat("Paid bookings", paid, "Consultations paid for", "check") + stat("Not completed", open, "Started but not paid", "alert", "warn") + stat("New enquiries", fresh, "Waiting for a first reply", "enquiries", "info") + stat("Collected", rupee(money), "From paid payments", "payments") + "</div>" +
+            '<div class="stats">' + stat("Paid bookings", paid, "Consultations paid for", "check") + stat("Not completed", open, "Started but not paid", "alert", "warn") + stat("New enquiries", fresh, "Waiting for a first reply", "enquiries", "info") + stat("Collected", rupee(money), "From paid payments", "payments") + stat("Cash to collect", rupee(cash), "Cash on delivery, not yet delivered", "payments", "warn") + "</div>" +
             '<div class="two">' + block("Latest bookings", "bookings", cases, MINI.bookings, "No bookings yet.") + block("Latest enquiries", "enquiries", enq, MINI.enquiries, "No enquiries yet.") + "</div>";
         }));
       }
@@ -415,11 +418,52 @@
         if (x[0] === "#") return '<h3 class="kv__h">' + esc(x[1]) + "</h3>";
         return '<div class="' + (x[2] === "long" ? "kv__wide" : "") + '"><dt>' + esc(x[0]) + '</dt><dd data-k="' + x[1] + '">' + cell(x[2], row[x[1]], row) + "</dd></div>";
       }).join("") + "</dl>";
+      if (v.orderTools && role === "admin") showOrderActions(v, row, redraw);
       if (v.addressTools) showAddressTools(row, redraw);
       if (v.callStatus) showCallStatus(row, redraw);
       if (v.reports) showReports(row);
       $("#scrim").hidden = false; d.hidden = false;
       $("#drawer-close").focus();
+    }
+    // Redraws the summary badges and detail values of the open panel after a change.
+    function repaint(v, row) {
+      row.pay_view = payView(row);
+      var hb = $(".hero__badges"); if (hb && v.hero) hb.innerHTML = v.hero.badges.map(function (x) { return cell(x[1], row[x[0]], row); }).join("");
+      v.detail.forEach(function (x) { var dd = x[0] === "#" ? null : $('#drawer-body dd[data-k="' + x[1] + '"]'); if (dd) dd.innerHTML = cell(x[2], row[x[1]], row); });
+    }
+    // Admin: confirm cash on delivery, and mark a packed order Delivered (with the cash received for cash on delivery).
+    function showOrderActions(v, row, redraw, msg) {
+      var old = $("#oa"); if (old) old.remove();
+      var unpaid = row.pay_status === "pending", packed = row.status === "packed" && !unpaid, done = row.status === "delivered", html = "";
+      if (unpaid) html += '<div class="act-block"><label for="cod-amt">Cash on delivery: amount to collect (rupees)</label><div class="act-row"><input id="cod-amt" class="num" type="number" inputmode="numeric" min="1" placeholder="For example 1500"><button class="btn btn--quiet" type="button" data-o="cod">Confirm cash on delivery</button></div><p class="hint">Use this when the family chooses to pay in cash on delivery. The order then goes to the kitchen.</p></div>';
+      if (packed) html += (row.addr_status !== "confirmed" ? note("warning", "The delivery address is not confirmed yet.") : "") + '<div class="act-row"><button class="btn" type="button" data-o="deliver">' + (row.payment_method === "cod" ? "Mark delivered, cash " + rupee(row.amount) + " received" : "Mark delivered") + "</button></div>";
+      else if (done) html += '<p class="hint">Delivered ' + esc(date(row.delivered_at)) + (row.cash_collected_at ? ". Cash " + rupee(row.amount) + " received." : ".") + '</p><div class="act-row"><button class="btn btn--quiet" type="button" data-o="undo">Undo delivered</button></div>';
+      else if (!unpaid) html += '<p class="hint">You can mark this order delivered once the kitchen has packed it.</p>';
+      if (!html) return;
+      $("#drawer-body").insertAdjacentHTML("beforeend", '<section class="sec" id="oa"><h3>Payment and delivery</h3>' + html + '<div id="oa-msg" aria-live="polite">' + (msg || "") + "</div></section>");
+      var box = $("#oa");
+      box.onclick = function (e) {
+        var b = e.target.closest("button[data-o]"); if (!b || b.disabled) return;
+        var what = b.getAttribute("data-o"), body, url, amt;
+        if (what === "cod") {
+          amt = parseInt($("#cod-amt").value, 10);
+          if (!(amt > 0)) { $("#oa-msg").innerHTML = note("error", "Enter the amount to collect, in rupees."); return $("#cod-amt").focus(); }
+          url = "/api/order-cod"; body = { order_id: row.id, amount: amt };
+        } else { url = "/api/order-delivered"; body = { order_id: row.id, delivered: what === "deliver" }; }
+        box.querySelectorAll("button").forEach(function (x) { x.disabled = true; });
+        post(url, body).then(function (resp) {
+          if (!resp.ok) return resp.json().catch(function () { return {}; }).then(function (d) { throw new Error(d.error || "failed"); });
+          var now = new Date().toISOString();
+          if (what === "cod") { row.pay_status = "cod"; row.payment_method = "cod"; row.amount = amt; }
+          else if (what === "deliver") { row.status = "delivered"; row.delivered_at = now; row.cash_collected_at = row.payment_method === "cod" ? now : null; }
+          else { row.status = "packed"; row.delivered_at = null; row.cash_collected_at = null; }
+          repaint(v, row); if (redraw) redraw();
+          showOrderActions(v, row, redraw, note("success", what === "cod" ? "Cash on delivery confirmed. The order is now on the kitchen board." : what === "deliver" ? "Marked delivered." : "Delivered undone. The order is packed again."));
+        }).catch(function (err) {
+          box.querySelectorAll("button").forEach(function (x) { x.disabled = false; });
+          $("#oa-msg").innerHTML = note("error", err.message && err.message !== "failed" ? err.message + "." : "Could not save. Please try again.");
+        });
+      };
     }
     // After the feed payment, a staff member sends the family a private link to add the address. The dietitian confirms it.
     function showAddressTools(row, redraw) {

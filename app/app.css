@@ -220,6 +220,13 @@ tr.is-click:focus-visible { outline-offset: -3px; }
 .btn, .nav a, .iconbtn, .seg__btn, .day, tr.is-click, .pw__toggle { transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s; }
 .btn:active:not([disabled]) { transform: translateY(1px); }
 @media (prefers-reduced-motion: reduce) { .btn, .nav a, .iconbtn, .seg__btn, tr.is-click { transition: none; } }
+.act-block { margin-bottom: 16px; }
+.act-block label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--ink); font-size: 14px; line-height: 20px; }
+.act-block .act-row { flex-wrap: nowrap; }
+.num { flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border: 1px solid var(--input); border-radius: 12px; font: 400 16px/24px var(--text); color: var(--ink); background: #FFFFFF; }
+.hint { margin: 8px 0 12px; font-size: 14px; line-height: 20px; }
+#oa .alert { margin-bottom: 12px; }
+#oa-msg:not(:empty) { margin-top: 12px; }
 .act-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .act-row .btn { min-height: 44px; }
 #at-msg:not(:empty) { margin-top: 12px; }

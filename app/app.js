@@ -100,7 +100,12 @@
     return d.length === 12 && d.indexOf("91") === 0 ? "+91 " + d.slice(2, 7) + " " + d.slice(7) : String(v);
   }
   function rupee(v) { return "&#8377;" + Number(v).toLocaleString("en-IN"); }
-  function badge(kind, text) { return '<span class="badge badge--' + kind + '">' + esc(text) + "</span>"; }
+  function badge(kind, text) { return '<span class="badge badge--' + kind + '"><i></i>' + esc(text) + "</span>"; }
+  var DATE_LONG = new Intl.DateTimeFormat("en-IN", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+  function ago(v) {
+    var m = Math.max(0, Math.round((Date.now() - new Date(v)) / 6e4));
+    return m < 2 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + (m < 2880 ? " day ago" : " days ago");
+  }
 
   var MAP = {
     pay: { paid: ["ok", "Paid"], not_completed: ["warn", "Not completed"] },
@@ -150,7 +155,13 @@
   }
 
   // ---------------------------------------------------------------- Screen definitions
-  var BOOKING_DETAIL = [["Case number", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Feeding route", "feeding_route"], ["Contact person", "contact_name"], ["Mobile", "mobile", "tel"], ["Call type", "call_type", "call"], ["Call time", "slot_at", "date"], ["Payment", "consult_payment", "pay"], ["Call status", "call_status", "call_st"], ["Amount", "consult_amount", "rupee"], ["Booked", "created_at", "date"], ["Paid", "paid_at", "date"], ["Health notes", "notes", "long"], ["Reports shared", "report_names", "long"]];
+  var BOOKING_DETAIL = [
+    ["#", "Patient"], ["Name", "patient_name", "strong"], ["Age", "age"], ["Feeding route", "feeding_route"],
+    ["#", "Contact"], ["Contact person", "contact_name"], ["Mobile", "mobile", "tel"],
+    ["#", "Consultation"], ["Amount", "consult_amount", "rupee"], ["Booked", "created_at", "date"], ["Paid", "paid_at", "date"],
+    ["#", "Health"], ["Health notes", "notes", "long"], ["Reports shared", "report_names", "long"]
+  ];
+  var BOOKING_HERO = { badges: [["consult_payment", "pay"], ["call_status", "call_st"]], time: "slot_at", type: "call_type" };
   var V = {
     // Dietitian
     dietitian_bookings: {
@@ -158,7 +169,7 @@
       search: "Search by name, case number or mobile",
       cols: [["Case", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Feeding route", "feeding_route"], ["Mobile", "mobile", "phone"], ["Call", "call_type", "call"], ["Call time", "slot_at", "date"], ["Call status", "call_status", "call_st"]],
       filter: ["call_status", "All call statuses", [["new", "New"], ["called", "Called"], ["closed", "Closed"]]],
-      detail: BOOKING_DETAIL, reports: true, callStatus: true, empty: ["No paid bookings yet", "When a family pays for a consultation, the booking appears here."]
+      detail: BOOKING_DETAIL, hero: BOOKING_HERO, subKey: "case_no", reports: true, callStatus: true, empty: ["No paid bookings yet", "When a family pays for a consultation, the booking appears here."]
     },
     // Admin
     bookings: {
@@ -166,7 +177,8 @@
       search: "Search by name, case number or mobile",
       cols: [["Case", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Mobile", "mobile", "phone"], ["Call", "call_type", "call"], ["Call time", "slot_at", "date"], ["Amount", "consult_amount", "rupee"], ["Payment", "consult_payment", "pay"], ["Call status", "call_status", "call_st"]],
       filter: ["consult_payment", "All payments", [["paid", "Paid"], ["not_completed", "Not completed"]]],
-      detail: BOOKING_DETAIL.filter(function (d) { return ["notes", "report_names", "feeding_route", "contact_name"].indexOf(d[1]) < 0; }),
+      detail: BOOKING_DETAIL.filter(function (d) { return ["notes", "report_names", "feeding_route", "contact_name"].indexOf(d[1]) < 0 && d[1] !== "Health"; }).filter(function (d, i, all) { return d[0] !== "#" || (all[i + 1] && all[i + 1][0] !== "#"); }),
+      hero: BOOKING_HERO, subKey: "case_no",
       empty: ["No bookings yet", "Bookings from the website appear here as soon as someone starts paying."]
     },
     enquiries: {
@@ -174,7 +186,8 @@
       search: "Search by name, organisation or mobile",
       cols: [["Reference", "ref", "code"], ["Type", "kind", "kind"], ["Name", "name", "strong"], ["Organisation", "org"], ["Mobile", "mobile", "phone"], ["Message", "message", "clip"], ["Progress", "progress", "progress"], ["Received", "created_at", "date"]],
       filter: ["progress", "All progress", [["new", "New"], ["contacted", "Contacted"], ["sent_to_dietitian", "Sent to dietitian"]]],
-      detail: [["Reference", "ref", "code"], ["Type", "kind", "kind"], ["Name", "name", "strong"], ["Organisation", "org"], ["Organisation type", "org_type"], ["Mobile", "mobile", "tel"], ["Progress", "progress", "progress"], ["Received", "created_at", "date"], ["Message", "message", "long"]],
+      detail: [["Name", "name", "strong"], ["Organisation", "org"], ["Organisation type", "org_type"], ["Mobile", "mobile", "tel"], ["Received", "created_at", "date"], ["Message", "message", "long"]],
+      hero: { badges: [["kind", "kind"], ["progress", "progress"]] }, subKey: "ref",
       empty: ["No enquiries yet", "Messages from the website forms appear here."]
     },
     payments: {
@@ -202,8 +215,8 @@
     }
   };
   var MINI = {
-    bookings: [["Patient", "patient_name", "strong"], ["Call", "call_type", "call"], ["Payment", "consult_payment", "pay"], ["Booked", "created_at", "date"]],
-    enquiries: [["Name", "name", "strong"], ["Type", "kind", "kind"], ["Progress", "progress", "progress"], ["Received", "created_at", "date"]]
+    bookings: [["Patient", "patient_name", "strong"], ["Payment", "consult_payment", "pay"], ["Call time", "slot_at", "date"]],
+    enquiries: [["Name", "name", "strong"], ["Progress", "progress", "progress"], ["Received", "created_at", "date"]]
   };
   var NAV = {
     dietitian: [["bookings", "Bookings", "bookings", "dietitian_bookings"]],
@@ -317,13 +330,13 @@
           var open = cases.length - paid;
           var fresh = enq.filter(function (e) { return e.progress === "new"; }).length;
           var money = pays.reduce(function (s, p) { return s + (p.status === "paid" ? p.amount : 0); }, 0);
-          function stat(label, value, hint) { return '<div class="stat"><span>' + label + "</span><b>" + value + "</b><small>" + hint + "</small></div>"; }
+          function stat(label, value, hint, ic, tone) { return '<div class="stat"><span class="stat__ic stat__ic--' + (tone || "ok") + '">' + icon(ic) + "</span><span>" + label + "</span><b>" + value + "</b><small>" + hint + "</small></div>"; }
           function block(title, id, rows, cols, emptyText) {
             return '<section class="block"><div class="block__head"><h2>' + title + '</h2><a href="#' + id + '">View all</a></div>' +
               (rows.length ? tableHTML(cols, rows.slice(0, 5), false) : '<p class="none pad">' + emptyText + "</p>") + "</section>";
           }
           content.innerHTML =
-            '<div class="stats">' + stat("Paid bookings", paid, "Consultations paid for") + stat("Not completed", open, "Started but not paid") + stat("New enquiries", fresh, "Waiting for a first reply") + stat("Collected", rupee(money), "From paid payments") + "</div>" +
+            '<div class="stats">' + stat("Paid bookings", paid, "Consultations paid for", "check") + stat("Not completed", open, "Started but not paid", "alert", "warn") + stat("New enquiries", fresh, "Waiting for a first reply", "enquiries", "info") + stat("Collected", rupee(money), "From paid payments", "payments") + "</div>" +
             '<div class="two">' + block("Latest bookings", "bookings", cases, MINI.bookings, "No bookings yet.") + block("Latest enquiries", "enquiries", enq, MINI.enquiries, "No enquiries yet.") + "</div>";
         }));
       }
@@ -339,7 +352,7 @@
         return "<li><span>" + esc(i.name) + "</span><span>" + esc(i.qty) + " " + esc(i.unit || "") + "</span></li>";
       }).join("");
       return '<article class="order"><header><b>' + esc(o.patient_name) + '</b><span class="code">' + esc(o.order_no) + "</span></header>" +
-        (o.quantity ? '<p class="qty">' + esc(o.quantity) + "</p>" : "") +
+        '<p class="qty">' + (o.quantity ? "<strong>" + esc(o.quantity) + "</strong>" : "") + "<span>Ordered " + esc(ago(o.created_at)) + "</span></p>" +
         (items ? '<ul class="ing">' + items + "</ul>" : "") +
         (o.avoid ? '<p class="alert alert--warning" role="status">' + icon("alert", 16) + "<span><strong>Do not include:</strong> " + esc(o.avoid) + "</span></p>" : "") +
         '<div class="act">' + (BACK[o.status] ? '<button class="btn btn--quiet" type="button" data-id="' + o.id + '" data-to="' + BACK[o.status] + '">Undo</button>' : "") +
@@ -350,7 +363,7 @@
       if (!orders.length) { content.innerHTML = kitchenHTML(); return; }
       content.innerHTML = '<div id="board-msg" aria-live="polite">' + (msg || "") + '</div><div class="board">' + STEPS.map(function (st) {
         var list = orders.filter(function (o) { return o.status === st[0]; }).sort(function (a, b) { return a.created_at < b.created_at ? -1 : 1; });
-        return '<section class="col" aria-label="' + esc(st[1]) + '"><h2>' + esc(st[1]) + '<span class="pill">' + list.length + "</span></h2>" +
+        return '<section class="col" data-step="' + st[0] + '" aria-label="' + esc(st[1]) + '"><h2><span>' + esc(st[1]) + '</span><span class="pill">' + list.length + "</span></h2>" +
           (list.length ? list.map(orderCard).join("") : '<p class="none">Nothing here</p>') + "</section>";
       }).join("") + "</div>";
     }
@@ -373,8 +386,15 @@
       opener = from;
       var d = $("#drawer");
       $("#drawer-title").textContent = row[v.titleKey] || "Details";
-      $("#drawer-body").innerHTML = '<dl class="kv">' + v.detail.map(function (x) {
-        return "<div><dt>" + esc(x[0]) + '</dt><dd data-k="' + x[1] + '">' + cell(x[2], row[x[1]], row) + "</dd></div>";
+      $("#drawer-sub").textContent = v.subKey ? row[v.subKey] || "" : "";
+      var h = v.hero, hero = "";
+      if (h) {
+        hero = '<div class="hero"><div class="hero__badges">' + h.badges.map(function (x) { return cell(x[1], row[x[0]], row); }).join("") + "</div>" +
+          (h.time && row[h.time] ? '<p class="hero__line"><strong>' + esc(DATE_LONG.format(new Date(row[h.time]))) + "</strong><span>" + cell("call", row[h.type], row) + "</span></p>" : "") + "</div>";
+      }
+      $("#drawer-body").innerHTML = hero + '<dl class="kv">' + v.detail.map(function (x) {
+        if (x[0] === "#") return '<h3 class="kv__h">' + esc(x[1]) + "</h3>";
+        return '<div class="' + (x[2] === "long" ? "kv__wide" : "") + '"><dt>' + esc(x[0]) + '</dt><dd data-k="' + x[1] + '">' + cell(x[2], row[x[1]], row) + "</dd></div>";
       }).join("") + "</dl>";
       if (v.callStatus) showCallStatus(row, redraw);
       if (v.reports) showReports(row);
@@ -396,7 +416,7 @@
           if (!resp.ok) throw new Error("failed");
           row.call_status = next;
           all.forEach(function (x) { var on = x.getAttribute("data-s") === next; x.classList.toggle("is-on", on); x.setAttribute("aria-pressed", on); });
-          var dd = $('#drawer-body dd[data-k="call_status"]'); if (dd) dd.innerHTML = cell("call_st", next, row);
+          var hb = $(".hero__badges"); if (hb) hb.innerHTML = cell("pay", row.consult_payment, row) + cell("call_st", next, row);
           if (redraw) redraw();
           msg.innerHTML = note("success", "Saved: " + STEPS.filter(function (x) { return x[0] === next; })[0][1]);
         }).catch(function () {
@@ -452,7 +472,7 @@
         '<main class="main"><header class="head"><div><h1 id="title"></h1><p id="sub"></p></div>' +
         '<button class="btn btn--quiet btn--icon" id="refresh" type="button" aria-label="Refresh">' + icon("refresh", 16) + "<span>Refresh</span></button></header><div id=\"content\"></div></main></div>" +
         '<div class="scrim" id="scrim" hidden></div><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden>' +
-        '<header><h2 id="drawer-title"></h2><button class="iconbtn" id="drawer-close" type="button" aria-label="Close">' + icon("close") + '</button></header><div id="drawer-body"></div></aside>';
+        '<header><div><h2 id="drawer-title"></h2><p id="drawer-sub"></p></div><button class="iconbtn" id="drawer-close" type="button" aria-label="Close">' + icon("close") + '</button></header><div id="drawer-body"></div></aside>';
       document.body.hidden = false;
       $("#signout").addEventListener("click", function () { client.auth.signOut().then(function () { location.replace("/app/"); }); });
       $("#refresh").addEventListener("click", route);

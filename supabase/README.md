@@ -15,6 +15,15 @@ Do these once. Nothing here goes in chat or in the code except the public addres
 8. Run `003_reports.sql` in the SQL Editor. It lets the dietitian open uploaded reports, and limits the private reports bucket to PDF, JPG and PNG files up to 10 MB.
 9. Run `004_slots.sql`. It adds the call time a patient picks on the website, and shows it to the Dietitian and Admin.
 10. Run `005_staff_actions.sql`. It lets the dietitian mark a call as New, Called or Closed through the server, and makes the Activity page show who made each change.
-11. Redeploy, then open `/app` on the site and sign in.
+11. Run `006_orders.sql`. It adds feed orders and the kitchen steps (New, Preparing, Prepared, Packed). The feed plan builder will create real orders later. To try the kitchen screen before that, add a test order by hand in the SQL Editor:
+
+```sql
+insert into orders (case_id, order_no, quantity, items, avoid)
+select id, 'FO-TEST-001', '1200 ml a day',
+  '[{"name":"Ragi porridge","qty":200,"unit":"g"},{"name":"Egg white","qty":3,"unit":"nos"}]'::jsonb, 'Milk, nuts'
+from cases where consult_payment = 'paid' order by paid_at desc limit 1;
+```
+
+12. Redeploy, then open `/app` on the site and sign in.
 
 Until step 7 is done, the website works exactly as before and the staff screens say sign in is not set up.

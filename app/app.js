@@ -16,6 +16,12 @@
   function profile() {
     return client.from("my_profile").select("name, role").maybeSingle().then(function (r) { return r.data; });
   }
+  // A write to our own server, with the signed-in person's token. The server checks who it is.
+  function post(path, body) {
+    return client.auth.getSession().then(function (r) {
+      return fetch(path, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + r.data.session.access_token }, body: JSON.stringify(body) });
+    });
+  }
   function fail(text) { var m = $("#msg"); if (!m) return; m.textContent = text; m.classList.add("is-shown"); }
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
@@ -100,10 +106,11 @@
     pay: { paid: ["ok", "Paid"], not_completed: ["warn", "Not completed"] },
     call_st: { new: ["info", "New"], called: ["ok", "Called"], closed: ["muted", "Closed"] },
     progress: { new: ["info", "New"], contacted: ["ok", "Contacted"], sent_to_dietitian: ["muted", "Sent to dietitian"] },
-    pstat: { created: ["muted", "Started"], paid: ["ok", "Paid"], failed: ["bad", "Failed"] }
+    pstat: { created: ["muted", "Started"], paid: ["ok", "Paid"], failed: ["bad", "Failed"] },
+    ostat: { new: ["info", "Waiting"], preparing: ["warn", "Preparing"], prepared: ["info", "Prepared"], packed: ["ok", "Packed"], delivered: ["muted", "Delivered"] }
   };
   var KIND = { contact: "Contact form", hospital: "Hospital enquiry", not_sure: "Not sure yet" };
-  var TABLE_NAME = { cases: "a booking", payments: "a payment", enquiries: "an enquiry", staff: "a staff member", reports: "a report" };
+  var TABLE_NAME = { cases: "a booking", payments: "a payment", enquiries: "an enquiry", staff: "a staff member", reports: "a report", orders: "an order" };
   var COLUMN = { consult_payment: "Payment", call_status: "Call status", progress: "Progress", status: "Status", paid_at: "Paid time" };
 
   function what(r) {
@@ -183,6 +190,13 @@
       cols: [["When", "at", "date"], ["Who", "actor_role", "who"], ["What changed", "action", "what"]],
       empty: ["No activity yet", "Changes to bookings, payments and enquiries are recorded here."]
     },
+    orders: {
+      title: "Orders", sub: "Where every feed order is in the kitchen.", source: "admin_orders", titleKey: "order_no",
+      search: "Search by order, case number or patient",
+      cols: [["Order", "order_no", "code"], ["Patient", "patient_name", "strong"], ["Case", "case_no", "code"], ["Quantity", "quantity"], ["Status", "status", "ostat"], ["Updated", "updated_at", "date"]],
+      filter: ["status", "All statuses", [["new", "Waiting"], ["preparing", "Preparing"], ["prepared", "Prepared"], ["packed", "Packed"], ["delivered", "Delivered"]]],
+      empty: ["No orders yet", "Feed orders appear here once a family has paid for a feed plan."]
+    },
     kitchen_orders: {
       title: "Orders", sub: "Feed orders to prepare and pack."
     }
@@ -194,7 +208,7 @@
   var NAV = {
     dietitian: [["bookings", "Bookings", "bookings", "dietitian_bookings"]],
     kitchen: [["orders", "Orders", "orders", "kitchen_orders"]],
-    admin: [["overview", "Overview", "overview"], ["bookings", "Bookings", "bookings", "bookings"], ["enquiries", "Enquiries", "enquiries", "enquiries"], ["payments", "Payments", "payments", "payments"], ["activity", "Activity", "activity", "activity"]]
+    admin: [["overview", "Overview", "overview"], ["bookings", "Bookings", "bookings", "bookings"], ["orders", "Orders", "orders", "orders"], ["enquiries", "Enquiries", "enquiries", "enquiries"], ["payments", "Payments", "payments", "payments"], ["activity", "Activity", "activity", "activity"]]
   };
 
   // ---------------------------------------------------------------- Data
@@ -253,7 +267,15 @@
       $("#title").textContent = n[0] === "overview" ? "Overview" : v.title;
       $("#sub").textContent = n[0] === "overview" ? "What is happening across MedMeal right now." : v.sub;
       document.title = $("#title").textContent + " | MedMeal staff";
-      if (role === "kitchen") { content.innerHTML = kitchenHTML(); return; }
+      if (role === "kitchen") {
+        content.innerHTML = skeleton();
+        load("kitchen_orders").then(function (rows) { if (my === token) { orders = rows; drawBoard(); } }).catch(function () {
+          if (my !== token) return;
+          content.innerHTML = emptyHTML("refresh", "Could not load the orders", "Please check your connection and try again.") + '<p class="center"><button class="btn btn--quiet" id="retry" type="button">Try again</button></p>';
+          $("#retry").addEventListener("click", route);
+        });
+        return;
+      }
       content.innerHTML = skeleton();
       var job = n[0] === "overview" ? overview() : list(v);
       job.catch(function () {
@@ -307,6 +329,39 @@
       }
     }
 
+    // Kitchen board: one column per step. Each card shows what to cook, what to avoid, and one big button for the next step.
+    var STEPS = [["new", "New"], ["preparing", "Preparing"], ["prepared", "Prepared"], ["packed", "Packed, ready to dispatch"]];
+    var NEXT = { new: ["preparing", "Start preparing"], preparing: ["prepared", "Mark prepared"], prepared: ["packed", "Mark packed"] };
+    var BACK = { preparing: "new", prepared: "preparing", packed: "prepared" };
+    var orders = [], busy = false;
+    function orderCard(o) {
+      var items = (Array.isArray(o.items) ? o.items : []).map(function (i) {
+        return "<li><span>" + esc(i.name) + "</span><span>" + esc(i.qty) + " " + esc(i.unit || "") + "</span></li>";
+      }).join("");
+      return '<article class="order"><header><b>' + esc(o.patient_name) + '</b><span class="code">' + esc(o.order_no) + "</span></header>" +
+        (o.quantity ? '<p class="qty">' + esc(o.quantity) + "</p>" : "") +
+        (items ? '<ul class="ing">' + items + "</ul>" : "") +
+        (o.avoid ? '<p class="alert alert--warning" role="status">' + icon("alert", 16) + "<span><strong>Do not include:</strong> " + esc(o.avoid) + "</span></p>" : "") +
+        '<div class="act">' + (BACK[o.status] ? '<button class="btn btn--quiet" type="button" data-id="' + o.id + '" data-to="' + BACK[o.status] + '">Undo</button>' : "") +
+        (NEXT[o.status] ? '<button class="btn" type="button" data-id="' + o.id + '" data-to="' + NEXT[o.status][0] + '">' + NEXT[o.status][1] + "</button>" : "") + "</div></article>";
+    }
+    function drawBoard(msg) {
+      var content = $("#content");
+      if (!orders.length) { content.innerHTML = kitchenHTML(); return; }
+      content.innerHTML = '<div id="board-msg" aria-live="polite">' + (msg || "") + '</div><div class="board">' + STEPS.map(function (st) {
+        var list = orders.filter(function (o) { return o.status === st[0]; }).sort(function (a, b) { return a.created_at < b.created_at ? -1 : 1; });
+        return '<section class="col" aria-label="' + esc(st[1]) + '"><h2>' + esc(st[1]) + '<span class="pill">' + list.length + "</span></h2>" +
+          (list.length ? list.map(orderCard).join("") : '<p class="none">Nothing here</p>') + "</section>";
+      }).join("") + "</div>";
+    }
+    function moveOrder(id, to) {
+      if (busy) return; busy = true;
+      document.querySelectorAll(".order button").forEach(function (b) { b.disabled = true; });
+      post("/api/order-status", { order_id: id, status: to }).then(function (resp) {
+        if (resp.ok) { orders.forEach(function (o) { if (o.id === id) o.status = to; }); drawBoard(); return; }
+        return load("kitchen_orders").then(function (rows) { orders = rows; drawBoard(note("warning", "That order has already moved. The board is up to date now.")); });
+      }).catch(function () { drawBoard(note("error", "Could not save. Please check your connection and try again.")); }).then(function () { busy = false; });
+    }
     function kitchenHTML() {
       return '<div class="empty">' + '<span class="empty__icon">' + icon("orders", 24) + "</span><h2>No feed orders yet</h2>" +
         "<p>When a dietitian approves a feed plan and the family pays, the order appears here with the ingredients and the sticker details.</p>" +
@@ -337,9 +392,7 @@
         var b = e.target.closest("button[data-s]"), next = b && b.getAttribute("data-s");
         if (!b || b.disabled || next === row.call_status) return;
         var all = box.querySelectorAll("button"); all.forEach(function (x) { x.disabled = true; });
-        client.auth.getSession().then(function (r) {
-          return fetch("/api/call-status", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + r.data.session.access_token }, body: JSON.stringify({ case_id: row.id, status: next }) });
-        }).then(function (resp) {
+        post("/api/call-status", { case_id: row.id, status: next }).then(function (resp) {
           if (!resp.ok) throw new Error("failed");
           row.call_status = next;
           all.forEach(function (x) { var on = x.getAttribute("data-s") === next; x.classList.toggle("is-on", on); x.setAttribute("aria-pressed", on); });
@@ -403,6 +456,13 @@
       document.body.hidden = false;
       $("#signout").addEventListener("click", function () { client.auth.signOut().then(function () { location.replace("/app/"); }); });
       $("#refresh").addEventListener("click", route);
+      if (role === "kitchen") {
+        $("#content").addEventListener("click", function (e) { var b = e.target.closest(".order button[data-id]"); if (b) moveOrder(b.getAttribute("data-id"), b.getAttribute("data-to")); });
+        setInterval(function () { // new orders show up without pressing Refresh
+          if (busy || document.hidden || !$(".board, .empty")) return;
+          load("kitchen_orders").then(function (rows) { if (!busy && JSON.stringify(rows) !== JSON.stringify(orders)) { orders = rows; drawBoard(); } }).catch(function () {});
+        }, 45000);
+      }
       $("#scrim").addEventListener("click", closeDrawer);
       $("#drawer-close").addEventListener("click", closeDrawer);
       document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });

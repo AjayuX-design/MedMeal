@@ -22,6 +22,8 @@
       return fetch(path, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + r.data.session.access_token }, body: JSON.stringify(body) });
     });
   }
+  // Every staff action goes to one place: POST /api/staff with the action name.
+  function act(action, body) { return post("/api/staff", Object.assign({ action: action }, body)); }
   function fail(text) { var m = $("#msg"); if (!m) return; m.textContent = text; m.classList.add("is-shown"); }
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
@@ -392,7 +394,7 @@
     function moveOrder(id, to) {
       if (busy) return; busy = true;
       document.querySelectorAll(".order button").forEach(function (b) { b.disabled = true; });
-      post("/api/order-status", { order_id: id, status: to }).then(function (resp) {
+      act("order-status", { order_id: id, status: to }).then(function (resp) {
         if (resp.ok) { orders.forEach(function (o) { if (o.id === id) o.status = to; }); drawBoard(); return; }
         return load("kitchen_orders").then(function (rows) { orders = rows; drawBoard(note("warning", "That order has already moved. The board is up to date now.")); });
       }).catch(function () { drawBoard(note("error", "Could not save. Please check your connection and try again.")); }).then(function () { busy = false; });
@@ -448,10 +450,10 @@
         if (what === "cod") {
           amt = parseInt($("#cod-amt").value, 10);
           if (!(amt > 0)) { $("#oa-msg").innerHTML = note("error", "Enter the amount to collect, in rupees."); return $("#cod-amt").focus(); }
-          url = "/api/order-cod"; body = { order_id: row.id, amount: amt };
-        } else { url = "/api/order-delivered"; body = { order_id: row.id, delivered: what === "deliver" }; }
+          url = "order-cod"; body = { order_id: row.id, amount: amt };
+        } else { url = "order-delivered"; body = { order_id: row.id, delivered: what === "deliver" }; }
         box.querySelectorAll("button").forEach(function (x) { x.disabled = true; });
-        post(url, body).then(function (resp) {
+        act(url, body).then(function (resp) {
           if (!resp.ok) return resp.json().catch(function () { return {}; }).then(function (d) { throw new Error(d.error || "failed"); });
           var now = new Date().toISOString();
           if (what === "cod") { row.pay_status = "cod"; row.payment_method = "cod"; row.amount = amt; }
@@ -477,7 +479,7 @@
         var b = e.target.closest("button[data-a]"); if (!b || b.disabled) return;
         var all = box.querySelectorAll("button"); all.forEach(function (x) { x.disabled = true; });
         var link = b.getAttribute("data-a") === "link";
-        post(link ? "/api/address-link" : "/api/address-confirm", { order_id: row.id }).then(function (resp) {
+        act(link ? "address-link" : "address-confirm", { order_id: row.id }).then(function (resp) {
           if (!resp.ok) throw new Error("failed");
           return resp.json();
         }).then(function (d) {
@@ -511,7 +513,7 @@
         var b = e.target.closest("button[data-s]"), next = b && b.getAttribute("data-s");
         if (!b || b.disabled || next === row.call_status) return;
         var all = box.querySelectorAll("button"); all.forEach(function (x) { x.disabled = true; });
-        post("/api/call-status", { case_id: row.id, status: next }).then(function (resp) {
+        act("call-status", { case_id: row.id, status: next }).then(function (resp) {
           if (!resp.ok) throw new Error("failed");
           row.call_status = next;
           all.forEach(function (x) { var on = x.getAttribute("data-s") === next; x.classList.toggle("is-on", on); x.setAttribute("aria-pressed", on); });

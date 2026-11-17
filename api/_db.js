@@ -32,6 +32,13 @@ async function find(table, col, val) {
   return r.ok && Array.isArray(r.data) ? r.data[0] || null : null;
 }
 
+// Rows from any read-only REST path, such as "cases?select=slot_at&slot_at=gte.2026-11-18". Null if the database is off or cannot be reached.
+async function query(path) {
+  if (!configured()) return null;
+  const r = await call("GET", path);
+  return r.ok && Array.isArray(r.data) ? r.data : null;
+}
+
 // All rows where column equals value (null if the database cannot be reached).
 async function list(table, col, val) {
   const r = await call("GET", table + "?" + col + "=eq." + q(val) + "&select=id");
@@ -61,4 +68,4 @@ async function update(table, col, val, patch) {
   return (await call("PATCH", table + "?" + col + "=eq." + q(val), patch)).ok;
 }
 
-module.exports = { configured, insert, find, list, signUpload, update };
+module.exports = { configured, insert, find, list, query, signUpload, update };

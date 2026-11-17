@@ -205,7 +205,7 @@
     var radios = $$('input[type="radio"]', g);
     var ok = radios.some(function (r) { return r.checked; });
     var p = g.querySelector(".field-error") || (function () { var e = document.createElement("p"); e.className = "field-error"; e.id = g.id + "-error"; e.setAttribute("role", "alert"); g.appendChild(e); return e; })();
-    p.innerHTML = ok ? "" : icon("alert") + "<span>Please choose one option.</span>";
+    p.innerHTML = ok ? "" : icon("alert") + "<span>" + (g.getAttribute("data-error") || "Please choose one option.") + "</span>";
     p.classList.toggle("is-shown", !ok);
     return ok;
   }
@@ -296,6 +296,59 @@
     var NAMES = { video: "Video consultation", phone: "Phone consultation", unsure: "Not sure yet" };
     var AMOUNTS = { video: 799, phone: 499 };
     function chosen() { return ($('input[name="consult"]:checked', form) || {}).value || "unsure"; }
+    // Call time picker: day buttons, then times for that day. Times come from /api/slots, so taken ones show as unavailable.
+    var slotWrap = $("#slot-wrap"), slotDays = $("#slot-days"), slotTimes = $("#slot-times"), slotGroup = $("#slot-group"), slotNotice = $("#slot-notice");
+    var slotData = null, slotDay = 0, chosenSlot = "", chosenLabel = "";
+    function needsSlot() { return !!AMOUNTS[chosen()]; }
+    function istHour(iso) { return new Date(Date.parse(iso) + 330 * 6e4).getUTCHours(); }
+    function drawSlots() {
+      var days = slotData.days;
+      if (!days.some(function (d) { return d.slots.some(function (x) { return x.free; }); })) {
+        slotDays.innerHTML = ""; slotTimes.innerHTML = alertHTML("info", "No call times are free right now. Please call or WhatsApp us and we will book a time for you.");
+        return;
+      }
+      slotDays.innerHTML = days.map(function (d, i) {
+        var free = d.slots.some(function (x) { return x.free; }), parts = d.label.split(" ");
+        return '<button type="button" class="day' + (i === slotDay ? " is-on" : "") + '" data-d="' + i + '"' + (free ? "" : " disabled") + ' aria-pressed="' + (i === slotDay) + '"><span>' + esc(parts[0]) + "</span><strong>" + esc(parts.slice(1).join(" ")) + "</strong></button>";
+      }).join("");
+      var groups = [["Morning", 0, 12], ["Afternoon", 12, 17], ["Evening", 17, 24]];
+      slotTimes.innerHTML = groups.map(function (g) {
+        var list = days[slotDay].slots.filter(function (x) { var h = istHour(x.start); return h >= g[1] && h < g[2]; });
+        if (!list.length) return "";
+        return '<p class="slot-part">' + g[0] + '</p><div class="slot-grid">' + list.map(function (x) {
+          return '<label class="slot-opt' + (x.free ? "" : " is-taken") + '"><input type="radio" name="slot" value="' + esc(x.start) + '"' + (x.free ? "" : " disabled") + ' data-label="' + esc(days[slotDay].label + ", " + x.label) + '"><span>' + esc(x.label) + (x.free ? "" : "<small>Booked</small>") + "</span></label>";
+        }).join("") + "</div>";
+      }).join("");
+    }
+    function loadSlots() {
+      slotDays.innerHTML = ""; slotTimes.innerHTML = '<p class="muted">Loading times...</p>';
+      fetch("/api/slots", { cache: "no-store" }).then(function (r) { if (!r.ok) throw new Error("failed"); return r.json(); }).then(function (d) {
+        slotData = d; chosenSlot = ""; chosenLabel = "";
+        slotDay = Math.max(0, d.days.findIndex(function (x) { return x.slots.some(function (y) { return y.free; }); }));
+        drawSlots(); slotGroup.dispatchEvent(new Event("change", { bubbles: true }));
+      }).catch(function () {
+        slotData = null;
+        slotTimes.innerHTML = alertHTML("error", "We could not load the call times.") + '<p><button class="btn btn--outline" type="button" id="slot-retry">Try again</button></p>';
+      });
+    }
+    function syncSlot() {
+      var on = needsSlot();
+      if (!slotWrap) return;
+      slotWrap.hidden = !on;
+      if (on) { slotGroup.setAttribute("data-group", ""); if (!slotData) loadSlots(); } else slotGroup.removeAttribute("data-group");
+    }
+    if (slotWrap) {
+      slotDays.addEventListener("click", function (e) {
+        var b = e.target.closest("button[data-d]"); if (!b || !slotData) return;
+        slotDay = +b.getAttribute("data-d"); chosenSlot = ""; chosenLabel = ""; drawSlots();
+        slotGroup.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      slotTimes.addEventListener("change", function (e) {
+        var r = e.target; if (r.name !== "slot") return;
+        chosenSlot = r.value; chosenLabel = r.getAttribute("data-label") || ""; if (slotNotice) slotNotice.innerHTML = ""; checkGroup(slotGroup);
+      });
+      slotTimes.addEventListener("click", function (e) { if (e.target.id === "slot-retry") loadSlots(); });
+    }
     function updatePay() {
       var c = chosen(), amt = AMOUNTS[c], note = $("#pay-note"), btn = $("#submit-btn"), err = $("#pay-error");
       if (err) { err.hidden = true; err.textContent = ""; }
@@ -325,7 +378,7 @@
     $$("[data-back]", form).forEach(function (b) { b.addEventListener("click", function () { show(cur - 1); }); });
     var fee = $("#fee-note");
     $$('input[name="consult"]', form).forEach(function (r) {
-      r.addEventListener("change", function () { if (fee) fee.textContent = FEES[r.value]; var g = $("#consult-group"); if (g) checkGroup(g); updatePay(); });
+      r.addEventListener("change", function () { if (fee) fee.textContent = FEES[r.value]; var g = $("#consult-group"); if (g) checkGroup(g); syncSlot(); updatePay(); });
     });
     var params = new URLSearchParams(location.search), about = "", tag = $("#enquiry-tag");
     var PLANS = { daily: "the Daily plan", "15-day": "the 15-Day plan", monthly: "the Monthly plan" };
@@ -366,10 +419,11 @@
     }
     function finish(payId, ref, notified, failed) {
       var c = chosen(), sum = $("#summary"), sent = picked.length - (failed || []).length;
-      sum.innerHTML = "<dl>" + (ref ? "<dt>Reference</dt><dd>" + esc(ref) + "</dd>" : "") + "<dt>Consultation</dt><dd>" + NAMES[c] + "</dd><dt>Patient</dt><dd>" + esc($("#patient").value) + "</dd><dt>Contact</dt><dd>" + esc($("#phone").value) + "</dd>" + (payId ? "<dt>Payment</dt><dd>\u20B9" + AMOUNTS[c] + " paid<br><small class=\"muted\">ID " + esc(payId) + "</small></dd>" : "") + (payId && picked.length ? "<dt>Reports</dt><dd>" + (failed && failed.length ? sent + " of " + picked.length + " uploaded" : sent + (sent === 1 ? " file" : " files") + " uploaded") + "</dd>" : "") + "</dl>";
+      sum.innerHTML = "<dl>" + (ref ? "<dt>Reference</dt><dd>" + esc(ref) + "</dd>" : "") + "<dt>Consultation</dt><dd>" + NAMES[c] + "</dd>" + (payId && chosenLabel ? "<dt>Call time</dt><dd>" + esc(chosenLabel) + '<br><small class="muted">India time</small></dd>' : "") + "<dt>Patient</dt><dd>" + esc($("#patient").value) + "</dd><dt>Contact</dt><dd>" + esc($("#phone").value) + "</dd>" + (payId ? "<dt>Payment</dt><dd>\u20B9" + AMOUNTS[c] + " paid<br><small class=\"muted\">ID " + esc(payId) + "</small></dd>" : "") + (payId && picked.length ? "<dt>Reports</dt><dd>" + (failed && failed.length ? sent + " of " + picked.length + " uploaded" : sent + (sent === 1 ? " file" : " files") + " uploaded") + "</dd>" : "") + "</dl>";
       if (failed && failed.length) sum.insertAdjacentHTML("beforeend", alertHTML("info", "<strong>Note:</strong> " + failed.map(esc).join(", ") + " did not upload. Our dietitian will ask for " + (failed.length === 1 ? "it" : "them") + " when they call you back."));
       if (notified === false) sum.insertAdjacentHTML("beforeend", alertHTML("error", "We could not pass your details to our team. Please call us and quote reference " + esc(ref || "") + " (payment ID " + esc(payId) + ")."));
       $("#thanks-name").textContent = $("#contact-name").value.trim().split(" ")[0];
+      if (payId && chosenLabel) $("#thanks .lead").textContent = "Your call is booked. Our dietitian will call you on the number you shared.";
       $("#form-wrap").hidden = true; $("#thanks").hidden = false;
       var h = $("#thanks h2"); h.setAttribute("tabindex", "-1"); h.focus();
       $("#form-top").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -377,7 +431,7 @@
     function details() {
       return {
         patient: $("#patient").value.trim(), age: $("#age").value.trim(), route: $("#route").value, contactName: $("#contact-name").value.trim(),
-        mobile: $("#phone").value.trim(), notes: $("#notes").value.trim(), reports: picked.map(function (f) { return f.name; }).join(", "),
+        mobile: $("#phone").value.trim(), notes: $("#notes").value.trim(), reports: picked.map(function (f) { return f.name; }).join(", "), slot: needsSlot() ? chosenSlot : "",
         website: ($('input[name="website"]', form) || {}).value || ""
       };
     }
@@ -416,7 +470,13 @@
       postJSON("/api/create-order", { consult: c, details: details() })
         .then(function (order) { return new Promise(function (ok, no) { loadRazorpay(function () { ok(order); }, no); }); })
         .then(openCheckout)
-        .catch(function (e) { console.warn("Payment could not start:", e && e.message); reset(); payError("We could not start the payment. Please check your internet and try again, or call us."); });
+        .catch(function (e) {
+          console.warn("Payment could not start:", e && e.message); reset();
+          if (e && e.message === "slot_taken") { // someone else took this time: back to the picker, with the times refreshed
+            show(0); loadSlots(); if (slotNotice) slotNotice.innerHTML = alertHTML("warning", "That time was just booked by someone else. Please choose another time.");
+            return;
+          }
+          payError("We could not start the payment. Please check your internet and try again, or call us."); });
     }
     form.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -424,6 +484,7 @@
       var c = chosen(), err = $("#pay-error"); if (err) err.hidden = true;
       if (AMOUNTS[c]) pay(c); else sendRequest();
     });
+    syncSlot();
     show(0, true);
     var updaters = steps.map(function (st) { return gate(st, $("[data-next], [type=submit]", st)); });
     updateSubmit = updaters[2];

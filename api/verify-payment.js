@@ -7,6 +7,7 @@ const { configured, text, lines, send } = require("./_notify");
 const { cleanBooking } = require("./_booking");
 const db = require("./_db");
 const token = require("./_token");
+const slots = require("./_slots");
 
 const LABELS = { 79900: "Video call", 49900: "Phone call" }; // by amount in paise
 
@@ -52,7 +53,8 @@ module.exports = async (req, res) => {
       const rupees = o.amount ? o.amount / 100 : null;
       if (!clean.error && o.receipt && rupees) {
         const call_type = rupees === 799 ? "video" : "phone";
-        let c = await db.insert("cases", Object.assign({ case_no: o.receipt, call_type, consult_amount: rupees }, clean.row));
+        const slotTs = Date.parse(String(d.slot || ""));
+        let c = await db.insert("cases", Object.assign({ case_no: o.receipt, call_type, consult_amount: rupees }, isNaN(slotTs) ? {} : { slot_at: new Date(slotTs).toISOString() }, clean.row));
         if (!c.row && c.conflict) c = { row: await db.find("cases", "case_no", o.receipt) };
         if (c.row) {
           caseId = c.row.id;
@@ -79,7 +81,7 @@ module.exports = async (req, res) => {
         ["Status", "PAID"], ["Reference", o.receipt || "could not be confirmed, find it in Razorpay by the order ID"], ["Consultation", what],
         ["Amount paid", paid], ["Payment ID", String(payment)], ["Order ID", String(order)],
       ]) + "\n\n" + lines([
-        ["Patient", text(d.patient, 100)], ["Age", text(d.age, 3)], ["How fed", text(d.route, 60)], ["Contact name", text(d.contactName, 100)],
+        ["Call time", isNaN(Date.parse(String(d.slot || ""))) ? "" : slots.describe(Date.parse(String(d.slot))) + " (India time)"], ["Patient", text(d.patient, 100)], ["Age", text(d.age, 3)], ["How fed", text(d.route, 60)], ["Contact name", text(d.contactName, 100)],
         ["Mobile", text(d.mobile, 20)], ["Notes", text(d.notes, 2000)], ["Reports attached (names only)", text(d.reports, 500)],
       ]),
     );

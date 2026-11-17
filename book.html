@@ -38,13 +38,20 @@
         <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
         <fieldset data-step="1">
           <legend>How would you like to talk?</legend>
-          <div class="need"><p class="need-title">What you need for this step</p><ul><li><i data-i="check"></i>Choose a video call, a phone call, or "Not sure yet". You can change this later with our team.</li></ul></div>
+          <div class="need"><p class="need-title">What you need for this step</p><ul><li><i data-i="check"></i>Choose a video call or a phone call, then pick a time for our dietitian to call you. Or choose "Not sure yet" and our team will call you.</li></ul></div>
           <div class="field" id="consult-group" data-group>
             <div class="choices" role="radiogroup" aria-label="Consultation type">
               <label class="choice"><input type="radio" name="consult" value="video"><span class="choice-box"><span class="choice-tick"><i data-i="check"></i></span><strong>Video call</strong><span class="fee">&#8377;799</span><small>Meet our dietitian online.</small></span></label>
               <label class="choice"><input type="radio" name="consult" value="phone"><span class="choice-box"><span class="choice-tick"><i data-i="check"></i></span><strong>Phone call</strong><span class="fee">&#8377;499</span><small>Talk to our dietitian by phone.</small></span></label>
               <label class="choice"><input type="radio" name="consult" value="unsure"><span class="choice-box"><span class="choice-tick"><i data-i="check"></i></span><strong>Not sure yet</strong><span class="fee fee--sm">We will help</span><small>Our team will call you.</small></span></label>
             </div>
+          </div>
+          <div class="field slot" id="slot-wrap" hidden>
+            <span class="label" id="slot-label">When should our dietitian call you?</span>
+            <p class="muted slot-help">Pick a day and a time. All times are India time. Our dietitian calls you back at the time you choose.</p>
+            <div id="slot-notice"></div>
+            <div class="days" id="slot-days" role="group" aria-label="Day"></div>
+            <div id="slot-group" data-error="Please choose a time for the call." aria-labelledby="slot-label"><div id="slot-times"></div></div>
           </div>
           <div class="actions"><button class="btn btn--primary btn--lg" type="button" data-next>Continue</button></div>
         </fieldset>

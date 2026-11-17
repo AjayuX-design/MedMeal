@@ -4,6 +4,7 @@
 const { ref } = require("./_notify");
 const { cleanBooking } = require("./_booking");
 const db = require("./_db");
+const slots = require("./_slots");
 
 const PRICES = { video: 799, phone: 499 }; // rupees
 
@@ -25,11 +26,22 @@ module.exports = async (req, res) => {
   const clean = b.details ? cleanBooking(b.details) : null;
   if (clean && clean.error) return res.status(400).json({ error: clean.error });
 
+  // The call time must be one we offer, and still free.
+  let slotAt = null;
+  if (clean) {
+    const ts = slots.valid(b.details.slot);
+    if (!ts) return res.status(400).json({ error: "Please choose a time for the call" });
+    if ((await slots.taken(db, ts, ts)).has(ts)) return res.status(409).json({ error: "slot_taken" });
+    slotAt = new Date(ts).toISOString();
+  }
+
   // Save the case first, so a patient who starts paying and stops is still on record. A database hiccup never blocks the payment.
   let caseNo = ref(), saved = null;
   if (clean && db.configured()) {
     for (let i = 0; i < 3 && !saved; i++) {
-      const r = await db.insert("cases", Object.assign({ case_no: caseNo, call_type: b.consult, consult_amount: rupees }, clean.row));
+      const row = Object.assign({ case_no: caseNo, call_type: b.consult, consult_amount: rupees, slot_at: slotAt }, clean.row);
+      let r = await db.insert("cases", row);
+      if (!r.row && !r.conflict) { delete row.slot_at; r = await db.insert("cases", row); if (r.row) console.error("slot_at column missing: run supabase/004_slots.sql"); }
       if (r.row) saved = r.row;
       else if (r.conflict) caseNo = ref(); // that number was taken, try another
       else break;

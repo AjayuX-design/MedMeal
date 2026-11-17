@@ -140,13 +140,13 @@
   }
 
   // ---------------------------------------------------------------- Screen definitions
-  var BOOKING_DETAIL = [["Case number", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Feeding route", "feeding_route"], ["Contact person", "contact_name"], ["Mobile", "mobile", "tel"], ["Call type", "call_type", "call"], ["Payment", "consult_payment", "pay"], ["Call status", "call_status", "call_st"], ["Amount", "consult_amount", "rupee"], ["Booked", "created_at", "date"], ["Paid", "paid_at", "date"], ["Health notes", "notes", "long"], ["Reports shared", "report_names", "long"]];
+  var BOOKING_DETAIL = [["Case number", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Feeding route", "feeding_route"], ["Contact person", "contact_name"], ["Mobile", "mobile", "tel"], ["Call type", "call_type", "call"], ["Call time", "slot_at", "date"], ["Payment", "consult_payment", "pay"], ["Call status", "call_status", "call_st"], ["Amount", "consult_amount", "rupee"], ["Booked", "created_at", "date"], ["Paid", "paid_at", "date"], ["Health notes", "notes", "long"], ["Reports shared", "report_names", "long"]];
   var V = {
     // Dietitian
     dietitian_bookings: {
       title: "Bookings", sub: "Paid consultations. Open a booking to see the health details.", source: "dietitian_cases", titleKey: "patient_name",
       search: "Search by name, case number or mobile",
-      cols: [["Case", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Feeding route", "feeding_route"], ["Mobile", "mobile", "phone"], ["Call", "call_type", "call"], ["Call status", "call_status", "call_st"], ["Paid", "paid_at", "date"]],
+      cols: [["Case", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Feeding route", "feeding_route"], ["Mobile", "mobile", "phone"], ["Call", "call_type", "call"], ["Call time", "slot_at", "date"], ["Call status", "call_status", "call_st"]],
       filter: ["call_status", "All call statuses", [["new", "New"], ["called", "Called"], ["closed", "Closed"]]],
       detail: BOOKING_DETAIL, reports: true, empty: ["No paid bookings yet", "When a family pays for a consultation, the booking appears here."]
     },
@@ -154,7 +154,7 @@
     bookings: {
       title: "Bookings", sub: "Everyone who started a booking, paid or not.", source: "admin_cases", titleKey: "patient_name",
       search: "Search by name, case number or mobile",
-      cols: [["Case", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Mobile", "mobile", "phone"], ["Call", "call_type", "call"], ["Amount", "consult_amount", "rupee"], ["Payment", "consult_payment", "pay"], ["Call status", "call_status", "call_st"], ["Booked", "created_at", "date"]],
+      cols: [["Case", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Mobile", "mobile", "phone"], ["Call", "call_type", "call"], ["Call time", "slot_at", "date"], ["Amount", "consult_amount", "rupee"], ["Payment", "consult_payment", "pay"], ["Call status", "call_status", "call_st"]],
       filter: ["consult_payment", "All payments", [["paid", "Paid"], ["not_completed", "Not completed"]]],
       detail: BOOKING_DETAIL.filter(function (d) { return ["notes", "report_names", "feeding_route", "contact_name"].indexOf(d[1]) < 0; }),
       empty: ["No bookings yet", "Bookings from the website appear here as soon as someone starts paying."]

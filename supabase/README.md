@@ -33,6 +33,7 @@ select id, 'FO-TEST-002', '1000 ml a day', '[{"name":"Rice gruel","qty":250,"uni
 from cases where consult_payment = 'paid' order by paid_at desc limit 1;
 ```
 
-14. Redeploy, then open `/app` on the site and sign in.
+14. Run `009_payment_roles.sql`. Payment options are for the Admin and the dietitian only, never the kitchen. The dietitian can now confirm cash on delivery too. Marking an order Delivered stays with the Admin.
+15. Redeploy, then open `/app` on the site and sign in.
 
 Until step 7 is done, the website works exactly as before and the staff screens say sign in is not set up.

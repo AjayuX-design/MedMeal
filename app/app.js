@@ -217,7 +217,7 @@
       search: "Search by order, case number or patient",
       cols: [["Order", "order_no", "code"], ["Patient", "patient_name", "strong"], ["Status", "status", "ostat"], ["Payment", "pay_view", "paystat"], ["Address", "addr_status", "astat"], ["Updated", "updated_at", "date"]],
       filter: ["addr_status", "All addresses", [["none", "Not received"], ["submitted", "To confirm"], ["confirmed", "Confirmed"]]],
-      detail: ORDER_DETAIL, hero: { badges: [["status", "ostat"], ["pay_view", "paystat"], ["addr_status", "astat"]] }, addressTools: true,
+      detail: ORDER_DETAIL, hero: { badges: [["status", "ostat"], ["pay_view", "paystat"], ["addr_status", "astat"]] }, addressTools: true, orderTools: true,
       empty: ["No orders yet", "Feed orders appear here once a family has paid for a feed plan."]
     },
     orders: {
@@ -420,7 +420,7 @@
         if (x[0] === "#") return '<h3 class="kv__h">' + esc(x[1]) + "</h3>";
         return '<div class="' + (x[2] === "long" ? "kv__wide" : "") + '"><dt>' + esc(x[0]) + '</dt><dd data-k="' + x[1] + '">' + cell(x[2], row[x[1]], row) + "</dd></div>";
       }).join("") + "</dl>";
-      if (v.orderTools && role === "admin") showOrderActions(v, row, redraw);
+      if (v.orderTools && (role === "admin" || role === "dietitian")) showOrderActions(v, row, redraw);
       if (v.addressTools) showAddressTools(row, redraw);
       if (v.callStatus) showCallStatus(row, redraw);
       if (v.reports) showReports(row);
@@ -436,13 +436,13 @@
     // Admin: confirm cash on delivery, and mark a packed order Delivered (with the cash received for cash on delivery).
     function showOrderActions(v, row, redraw, msg) {
       var old = $("#oa"); if (old) old.remove();
-      var unpaid = row.pay_status === "pending", packed = row.status === "packed" && !unpaid, done = row.status === "delivered", html = "";
+      var admin = role === "admin", unpaid = row.pay_status === "pending", packed = admin && row.status === "packed" && !unpaid, done = admin && row.status === "delivered", html = "";
       if (unpaid) html += '<div class="act-block"><label for="cod-amt">Cash on delivery: amount to collect (rupees)</label><div class="act-row"><input id="cod-amt" class="num" type="number" inputmode="numeric" min="1" placeholder="For example 1500"><button class="btn btn--quiet" type="button" data-o="cod">Confirm cash on delivery</button></div><p class="hint">Use this when the family chooses to pay in cash on delivery. The order then goes to the kitchen.</p></div>';
       if (packed) html += (row.addr_status !== "confirmed" ? note("warning", "The delivery address is not confirmed yet.") : "") + '<div class="act-row"><button class="btn" type="button" data-o="deliver">' + (row.payment_method === "cod" ? "Mark delivered, cash " + rupee(row.amount) + " received" : "Mark delivered") + "</button></div>";
       else if (done) html += '<p class="hint">Delivered ' + esc(date(row.delivered_at)) + (row.cash_collected_at ? ". Cash " + rupee(row.amount) + " received." : ".") + '</p><div class="act-row"><button class="btn btn--quiet" type="button" data-o="undo">Undo delivered</button></div>';
-      else if (!unpaid) html += '<p class="hint">You can mark this order delivered once the kitchen has packed it.</p>';
-      if (!html) return;
-      $("#drawer-body").insertAdjacentHTML("beforeend", '<section class="sec" id="oa"><h3>Payment and delivery</h3>' + html + '<div id="oa-msg" aria-live="polite">' + (msg || "") + "</div></section>");
+      else if (!unpaid && admin) html += '<p class="hint">You can mark this order delivered once the kitchen has packed it.</p>';
+      if (!html && !msg) return;
+      $("#drawer-body").insertAdjacentHTML("beforeend", '<section class="sec" id="oa"><h3>' + (admin ? "Payment and delivery" : "Payment") + '</h3>' + html + '<div id="oa-msg" aria-live="polite">' + (msg || "") + "</div></section>");
       var box = $("#oa");
       box.onclick = function (e) {
         var b = e.target.closest("button[data-o]"); if (!b || b.disabled) return;

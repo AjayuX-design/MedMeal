@@ -13,6 +13,8 @@ Do these once. Nothing here goes in chat or in the code except the public addres
    - `SUPABASE_ANON_KEY`: the anon public key
    - `SUPABASE_SERVICE_ROLE_KEY`: the service_role key, marked **Sensitive**. Never paste it in chat.
 8. Run `003_reports.sql` in the SQL Editor. It lets the dietitian open uploaded reports, and limits the private reports bucket to PDF, JPG and PNG files up to 10 MB.
-9. Redeploy, then open `/app` on the site and sign in.
+9. Run `004_slots.sql`. It adds the call time a patient picks on the website, and shows it to the Dietitian and Admin.
+10. Run `005_staff_actions.sql`. It lets the dietitian mark a call as New, Called or Closed through the server, and makes the Activity page show who made each change.
+11. Redeploy, then open `/app` on the site and sign in.
 
 Until step 7 is done, the website works exactly as before and the staff screens say sign in is not set up.

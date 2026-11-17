@@ -39,6 +39,12 @@ async function query(path) {
   return r.ok && Array.isArray(r.data) ? r.data : null;
 }
 
+// Runs a database function by name (these functions are only callable with the server key).
+async function rpc(fn, args) {
+  const r = await call("POST", "rpc/" + fn, args);
+  return { ok: r.ok, status: r.status, data: r.data };
+}
+
 // All rows where column equals value (null if the database cannot be reached).
 async function list(table, col, val) {
   const r = await call("GET", table + "?" + col + "=eq." + q(val) + "&select=id");
@@ -68,4 +74,4 @@ async function update(table, col, val, patch) {
   return (await call("PATCH", table + "?" + col + "=eq." + q(val), patch)).ok;
 }
 
-module.exports = { configured, insert, find, list, query, signUpload, update };
+module.exports = { configured, insert, find, list, query, rpc, signUpload, update };

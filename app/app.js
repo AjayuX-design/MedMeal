@@ -78,12 +78,15 @@
     orders: '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
     refresh: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
     close: '<path d="M18 6 6 18M6 6l12 12"/>',
-    search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'
+    search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+    check: '<path d="M20 6 9 17l-5-5"/>',
+    alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>'
   };
   function icon(n, size) {
     size = size || 20;
     return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[n] + "</svg>";
   }
+  function note(type, text) { return '<p class="alert alert--' + type + '" role="' + (type === "error" ? "alert" : "status") + '">' + icon(type === "success" ? "check" : "alert", 16) + "<span>" + esc(text) + "</span></p>"; }
   var DATE = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
   function date(v) { var d = new Date(v); return isNaN(d) ? String(v) : DATE.format(d); }
   function phone(v) {
@@ -148,7 +151,7 @@
       search: "Search by name, case number or mobile",
       cols: [["Case", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Feeding route", "feeding_route"], ["Mobile", "mobile", "phone"], ["Call", "call_type", "call"], ["Call time", "slot_at", "date"], ["Call status", "call_status", "call_st"]],
       filter: ["call_status", "All call statuses", [["new", "New"], ["called", "Called"], ["closed", "Closed"]]],
-      detail: BOOKING_DETAIL, reports: true, empty: ["No paid bookings yet", "When a family pays for a consultation, the booking appears here."]
+      detail: BOOKING_DETAIL, reports: true, callStatus: true, empty: ["No paid bookings yet", "When a family pays for a consultation, the booking appears here."]
     },
     // Admin
     bookings: {
@@ -280,8 +283,8 @@
           function cols(r) { return v.cols.map(function (c) { return String(r[c[1]] == null ? "" : r[c[1]]); }).concat(r.mobile ? [String(r.mobile).slice(-10)] : []).join(" ").toLowerCase(); }
           $("#q").addEventListener("input", function (e) { q = e.target.value.trim().toLowerCase(); draw(); });
           if (v.filter) $("#f").addEventListener("change", function (e) { f = e.target.value; draw(); });
-          $("#tbl").addEventListener("click", function (e) { var tr = e.target.closest("tr[data-i]"); if (tr && !e.target.closest("a")) openDrawer(v, shown[+tr.dataset.i], tr); });
-          $("#tbl").addEventListener("keydown", function (e) { var tr = e.target.closest("tr[data-i]"); if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openDrawer(v, shown[+tr.dataset.i], tr); } });
+          $("#tbl").addEventListener("click", function (e) { var tr = e.target.closest("tr[data-i]"); if (tr && !e.target.closest("a")) openDrawer(v, shown[+tr.dataset.i], tr, draw); });
+          $("#tbl").addEventListener("keydown", function (e) { var tr = e.target.closest("tr[data-i]"); if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openDrawer(v, shown[+tr.dataset.i], tr, draw); } });
           draw();
         }));
       }
@@ -311,16 +314,45 @@
     }
 
     // Detail panel
-    function openDrawer(v, row, from) {
+    function openDrawer(v, row, from, redraw) {
       opener = from;
       var d = $("#drawer");
       $("#drawer-title").textContent = row[v.titleKey] || "Details";
       $("#drawer-body").innerHTML = '<dl class="kv">' + v.detail.map(function (x) {
-        return "<div><dt>" + esc(x[0]) + "</dt><dd>" + cell(x[2], row[x[1]], row) + "</dd></div>";
+        return "<div><dt>" + esc(x[0]) + '</dt><dd data-k="' + x[1] + '">' + cell(x[2], row[x[1]], row) + "</dd></div>";
       }).join("") + "</dl>";
+      if (v.callStatus) showCallStatus(row, redraw);
       if (v.reports) showReports(row);
       $("#scrim").hidden = false; d.hidden = false;
       $("#drawer-close").focus();
+    }
+    // The dietitian marks the call: New, Called or Closed. The server checks who is asking and records the change.
+    function showCallStatus(row, redraw) {
+      var STEPS = [["new", "New"], ["called", "Called"], ["closed", "Closed"]];
+      $("#drawer-body").insertAdjacentHTML("beforeend", '<section class="sec" id="cs"><h3>Call status</h3><div class="seg" role="group" aria-label="Call status">' + STEPS.map(function (x) {
+        return '<button type="button" class="seg__btn' + (row.call_status === x[0] ? " is-on" : "") + '" data-s="' + x[0] + '" aria-pressed="' + (row.call_status === x[0]) + '">' + x[1] + "</button>";
+      }).join("") + '</div><div id="cs-msg" aria-live="polite"></div></section>');
+      var box = $("#cs"), msg = $("#cs-msg"), timer;
+      box.onclick = function (e) {
+        var b = e.target.closest("button[data-s]"), next = b && b.getAttribute("data-s");
+        if (!b || b.disabled || next === row.call_status) return;
+        var all = box.querySelectorAll("button"); all.forEach(function (x) { x.disabled = true; });
+        client.auth.getSession().then(function (r) {
+          return fetch("/api/call-status", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + r.data.session.access_token }, body: JSON.stringify({ case_id: row.id, status: next }) });
+        }).then(function (resp) {
+          if (!resp.ok) throw new Error("failed");
+          row.call_status = next;
+          all.forEach(function (x) { var on = x.getAttribute("data-s") === next; x.classList.toggle("is-on", on); x.setAttribute("aria-pressed", on); });
+          var dd = $('#drawer-body dd[data-k="call_status"]'); if (dd) dd.innerHTML = cell("call_st", next, row);
+          if (redraw) redraw();
+          msg.innerHTML = note("success", "Saved: " + STEPS.filter(function (x) { return x[0] === next; })[0][1]);
+        }).catch(function () {
+          msg.innerHTML = note("error", "Could not save. Please try again.");
+        }).then(function () {
+          all.forEach(function (x) { x.disabled = false; });
+          clearTimeout(timer); timer = setTimeout(function () { msg.innerHTML = ""; }, 4000);
+        });
+      };
     }
     // The patient's uploaded reports. Each opens through a short-lived private link made on click.
     function showReports(row) {

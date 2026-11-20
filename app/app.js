@@ -52,10 +52,12 @@
 
     $("#login-form").addEventListener("submit", function (e) {
       e.preventDefault();
-      var btn = $("#login-btn"); btn.disabled = true; $("#msg").classList.remove("is-shown");
-      if (!client) { btn.disabled = false; return fail("Sign in is not set up yet. Please ask Pixxel Nesst."); }
+      var btn = $("#login-btn"); $("#msg").classList.remove("is-shown");
+      function busy(on) { btn.disabled = on; btn.textContent = on ? "Signing in..." : "Sign in"; btn.setAttribute("aria-busy", on); }
+      if (!client) return fail("Sign in is not set up yet. Please ask Pixxel Nesst.");
       var picked = document.querySelector("input[name=role]:checked");
-      if (!picked) { btn.disabled = false; return fail("Please choose your role first."); }
+      if (!picked) return fail("Please choose your role first.");
+      busy(true);
       client.auth.signInWithPassword({ email: $("#email").value.trim(), password: $("#password").value }).then(function (r) {
         if (r.error) throw new Error(r.error.status === 400 || r.error.status === 422 ? "bad login" : "network");
         return profile();
@@ -65,7 +67,7 @@
         try { localStorage.setItem("mm_role", p.role); } catch (e) {}
         location.replace(SCREEN[p.role]);
       }).catch(function (err) {
-        btn.disabled = false;
+        busy(false);
         client.auth.signOut();
         var m = String(err.message);
         fail(m === "no role" ? "This account has no role yet. Please ask the admin."
@@ -178,6 +180,7 @@
       search: "Search by name, case number or mobile",
       cols: [["Case", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Feeding route", "feeding_route"], ["Mobile", "mobile", "phone"], ["Call", "call_type", "call"], ["Call time", "slot_at", "date"], ["Call status", "call_status", "call_st"]],
       filter: ["call_status", "All call statuses", [["new", "New"], ["called", "Called"], ["closed", "Closed"]]],
+      group: callGroup, day: true, mobile: ["patient_name", "slot_at", "call_type", "call_status"],
       detail: BOOKING_DETAIL, hero: BOOKING_HERO, subKey: "case_no", reports: true, callStatus: true, empty: ["No paid bookings yet", "When a family pays for a consultation, the booking appears here."]
     },
     // Admin
@@ -186,6 +189,7 @@
       search: "Search by name, case number or mobile",
       cols: [["Case", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Mobile", "mobile", "phone"], ["Call", "call_type", "call"], ["Call time", "slot_at", "date"], ["Amount", "consult_amount", "rupee"], ["Payment", "consult_payment", "pay"], ["Call status", "call_status", "call_st"]],
       filter: ["consult_payment", "All payments", [["paid", "Paid"], ["not_completed", "Not completed"]]],
+      mobile: ["patient_name", "slot_at", "consult_payment", "call_status"],
       detail: BOOKING_DETAIL.filter(function (d) { return ["notes", "report_names", "feeding_route", "contact_name"].indexOf(d[1]) < 0 && d[1] !== "Health"; }).filter(function (d, i, all) { return d[0] !== "#" || (all[i + 1] && all[i + 1][0] !== "#"); }),
       hero: BOOKING_HERO, subKey: "case_no",
       empty: ["No bookings yet", "Bookings from the website appear here as soon as someone starts paying."]
@@ -195,6 +199,7 @@
       search: "Search by name, organisation or mobile",
       cols: [["Reference", "ref", "code"], ["Type", "kind", "kind"], ["Name", "name", "strong"], ["Organisation", "org"], ["Mobile", "mobile", "phone"], ["Message", "message", "clip"], ["Progress", "progress", "progress"], ["Received", "created_at", "date"]],
       filter: ["progress", "All progress", [["new", "New"], ["contacted", "Contacted"], ["sent_to_dietitian", "Sent to dietitian"]]],
+      mobile: ["name", "kind", "progress", "created_at"],
       detail: [["Name", "name", "strong"], ["Organisation", "org"], ["Organisation type", "org_type"], ["Mobile", "mobile", "tel"], ["Received", "created_at", "date"], ["Message", "message", "long"]],
       hero: { badges: [["kind", "kind"], ["progress", "progress"]] }, subKey: "ref",
       empty: ["No enquiries yet", "Messages from the website forms appear here."]
@@ -204,6 +209,7 @@
       search: "Search by case number or patient",
       cols: [["Case", "case_no", "code"], ["Patient", "patient_name", "strong"], ["For", "kind", "pkind"], ["Amount", "amount", "rupee"], ["Status", "status", "pstat"], ["Started", "created_at", "date"], ["Paid", "paid_at", "date"]],
       filter: ["status", "All statuses", [["paid", "Paid"], ["created", "Started"], ["failed", "Failed"]]],
+      mobile: ["patient_name", "amount", "status", "created_at"],
       empty: ["No payments yet", "Payments appear here once someone starts to pay."]
     },
     activity: {
@@ -217,6 +223,7 @@
       search: "Search by order, case number or patient",
       cols: [["Order", "order_no", "code"], ["Patient", "patient_name", "strong"], ["Status", "status", "ostat"], ["Payment", "pay_view", "paystat"], ["Address", "addr_status", "astat"], ["Updated", "updated_at", "date"]],
       filter: ["addr_status", "All addresses", [["none", "Not received"], ["submitted", "To confirm"], ["confirmed", "Confirmed"]]],
+      mobile: ["patient_name", "status", "pay_view", "addr_status"],
       detail: ORDER_DETAIL, hero: { badges: [["status", "ostat"], ["pay_view", "paystat"], ["addr_status", "astat"]] }, addressTools: true,
       empty: ["No orders yet", "Feed orders appear here once a family has paid for a feed plan."]
     },
@@ -226,6 +233,7 @@
       search: "Search by order, case number or patient",
       cols: [["Order", "order_no", "code"], ["Patient", "patient_name", "strong"], ["Status", "status", "ostat"], ["Payment", "pay_view", "paystat"], ["Address", "addr_status", "astat"], ["Updated", "updated_at", "date"]],
       filter: ["status", "All statuses", [["new", "Waiting"], ["preparing", "Preparing"], ["prepared", "Prepared"], ["packed", "Packed"], ["delivered", "Delivered"]]],
+      mobile: ["patient_name", "status", "pay_view", "addr_status"],
       empty: ["No orders yet", "Feed orders appear here once a family has paid for a feed plan."]
     },
     kitchen_orders: {
@@ -235,6 +243,13 @@
   var MINI = {
     bookings: [["Patient", "patient_name", "strong"], ["Payment", "consult_payment", "pay"], ["Call time", "slot_at", "date"]],
     enquiries: [["Name", "name", "strong"], ["Progress", "progress", "progress"], ["Received", "created_at", "date"]]
+  };
+  // Links from "Needs attention" open a list with one of these filters already on: #orders?show=cod
+  var PRESETS = {
+    cod: { view: "orders", label: "Orders waiting for a cash on delivery decision", test: function (r) { return r.pay_view === "unpaid"; } },
+    address: { view: "orders", label: "Addresses to confirm", test: function (r) { return r.addr_status === "submitted"; } },
+    unpaid: { view: "bookings", label: "Bookings not paid", test: function (r) { return r.consult_payment === "not_completed"; } },
+    fresh: { view: "enquiries", label: "New enquiries", test: function (r) { return r.progress === "new"; } }
   };
   var NAV = {
     dietitian: [["bookings", "Bookings", "bookings", "dietitian_bookings"], ["orders", "Orders", "orders", "dietitian_orders"]],
@@ -269,11 +284,25 @@
   }
 
   // ---------------------------------------------------------------- Pieces
-  function tableHTML(cols, rows, clickable, titleKey) {
+  // Call-time groups for the dietitian list, in the order they are shown.
+  var GROUPS = ["Today", "Tomorrow", "Later", "Earlier", "No call time"];
+  function callGroup(r) {
+    var d = r.slot_at && new Date(r.slot_at);
+    if (!d || isNaN(d)) return 4;
+    var t = new Date(); t.setHours(0, 0, 0, 0);
+    var n = Math.round((new Date(d).setHours(0, 0, 0, 0) - t) / 864e5);
+    return n === 0 ? 0 : n === 1 ? 1 : n > 1 ? 2 : 3;
+  }
+  // x.mobile: the only columns kept in the phone cards. x.group: a function that puts rows under headings.
+  function tableHTML(cols, rows, clickable, titleKey, x) {
+    x = x || {};
+    var counts = {}, last = -1;
+    if (x.group) rows.forEach(function (r) { var g = x.group(r); counts[g] = (counts[g] || 0) + 1; });
     var h = '<div class="tablewrap"><table><thead><tr>' + cols.map(function (c) { return '<th scope="col">' + esc(c[0]) + "</th>"; }).join("") + "</tr></thead><tbody>";
     rows.forEach(function (r, i) {
+      if (x.group) { var g = x.group(r); if (g !== last) { last = g; h += '<tr class="grp"><th scope="colgroup" colspan="' + cols.length + '">' + GROUPS[g] + " <span>" + counts[g] + "</span></th></tr>"; } }
       h += "<tr" + (clickable ? ' class="is-click" tabindex="0" aria-haspopup="dialog" aria-label="Open details for ' + esc(r[titleKey] || "this row") + '" data-i="' + i + '"' : "") + ">" +
-        cols.map(function (c) { return '<td data-label="' + esc(c[0]) + '">' + cell(c[2], r[c[1]], r) + "</td>"; }).join("") + "</tr>";
+        cols.map(function (c) { return "<td" + (x.mobile && x.mobile.indexOf(c[1]) < 0 ? ' class="m-hide"' : "") + ' data-label="' + esc(c[0]) + '">' + cell(c[2], r[c[1]], r) + "</td>"; }).join("") + "</tr>";
     });
     return h + "</tbody></table></div>";
   }
@@ -286,12 +315,16 @@
 
   // ---------------------------------------------------------------- Role screens
   function screen(role) {
-    var profileRow, view, token = 0, opener, reportToken = 0;
+    var profileRow, view, token = 0, opener, reportToken = 0, silent = null, preset = null;
+    var TIME = new Intl.DateTimeFormat("en-IN", { hour: "numeric", minute: "2-digit" });
+    function stamp() { var u = $("#updated"); if (u) u.textContent = "Updated " + TIME.format(new Date()).toLowerCase(); }
     var nav = NAV[role];
 
     function route() {
-      var id = location.hash.slice(1);
+      var parts = location.hash.slice(1).split("?"), id = parts[0];
       var n = nav.filter(function (x) { return x[0] === id; })[0] || nav[0];
+      var pr = PRESETS[new URLSearchParams(parts[1] || "").get("show")];
+      preset = pr && V[n[3]] && pr.view === n[3] ? pr : null;
       document.querySelectorAll(".nav a").forEach(function (a) {
         if (a.getAttribute("href") === "#" + n[0]) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
       });
@@ -301,12 +334,13 @@
 
     function render(n) {
       var my = ++token, content = $("#content"), v = V[n[3]] || {};
+      silent = null;
       $("#title").textContent = n[0] === "overview" ? "Overview" : v.title;
       $("#sub").textContent = n[0] === "overview" ? "What is happening across MedMeal right now." : v.sub;
       document.title = $("#title").textContent + " | MedMeal staff";
       if (role === "kitchen") {
         content.innerHTML = skeleton();
-        load("kitchen_orders").then(function (rows) { if (my === token) { orders = rows; drawBoard(); } }).catch(function () {
+        load("kitchen_orders").then(function (rows) { if (my === token) { orders = rows; drawBoard(); stamp(); } }).catch(function () {
           if (my !== token) return;
           content.innerHTML = emptyHTML("refresh", "Could not load the orders", "Please check your connection and try again.") + '<p class="center"><button class="btn btn--quiet" id="retry" type="button">Try again</button></p>';
           $("#retry").addEventListener("click", route);
@@ -315,6 +349,7 @@
       }
       content.innerHTML = skeleton();
       var job = n[0] === "overview" ? overview() : list(v);
+      if (n[0] === "overview") silent = overview;
       job.catch(function () {
         if (my !== token) return;
         content.innerHTML = emptyHTML("refresh", "Could not load this page", "Please check your connection and try again.") + '<p class="center"><button class="btn btn--quiet" id="retry" type="button">Try again</button></p>';
@@ -323,32 +358,39 @@
       function guard(fn) { return function (x) { if (my === token) return fn(x); }; }
       function list(v) {
         return rowsFor(v).then(guard(function (rows) {
-          var q = "", f = "";
-          content.innerHTML =
+          var q = "", f = "", day = "", pre = preset;
+          content.innerHTML = (pre ? '<p class="chip"><span>Showing: ' + esc(pre.label) + '</span><a href="#' + n[0] + '">Show all</a></p>' : "") +
             '<div class="toolbar"><label class="search">' + icon("search", 16) + '<input id="q" type="search" placeholder="' + esc(v.search) + '" aria-label="' + esc(v.search) + '"></label>' +
             (v.filter ? '<select id="f" aria-label="' + esc(v.filter[1]) + '"><option value="">' + esc(v.filter[1]) + "</option>" + v.filter[2].map(function (o) { return '<option value="' + o[0] + '">' + esc(o[1]) + "</option>"; }).join("") + "</select>" : "") +
+            (v.day ? '<select id="d" aria-label="Call day"><option value="">All days</option><option value="today">Today</option><option value="tomorrow">Tomorrow</option></select>' : "") +
             '<span class="count" id="count" aria-live="polite"></span></div><div id="tbl"></div>';
           var shown = rows;
           function draw() {
             shown = rows.filter(function (r) {
+              if (pre && !pre.test(r)) return false;
               if (f && r[v.filter[0]] !== f) return false;
+              if (day && callGroup(r) !== (day === "today" ? 0 : 1)) return false;
               return !q || cols(r).indexOf(q) >= 0;
             });
+            if (v.group) shown.sort(function (a, b) { var ga = v.group(a), gb = v.group(b); return ga - gb || (ga === 3 ? new Date(b.slot_at) - new Date(a.slot_at) : new Date(a.slot_at) - new Date(b.slot_at)) || 0; });
             $("#count").textContent = shown.length === rows.length ? rows.length + (rows.length === 1 ? " record" : " records") : shown.length + " of " + rows.length;
             $("#tbl").innerHTML = !rows.length ? emptyHTML(n[2], v.empty[0], v.empty[1])
-              : !shown.length ? emptyHTML("search", "Nothing matches", "Try a different search or filter.")
-              : tableHTML(v.cols, shown, !!v.detail, v.titleKey);
+              : !shown.length ? (pre && !q && !f && !day ? emptyHTML("check", "All clear", "Nothing needs attention here right now.") : day && !q && !f ? emptyHTML("check", "No calls " + day, "Nothing is booked for " + day + ".") : emptyHTML("search", "Nothing matches", "Try a different search or filter."))
+              : tableHTML(v.cols, shown, !!v.detail, v.titleKey, { mobile: v.mobile, group: v.group });
           }
           function cols(r) { return v.cols.map(function (c) { return String(r[c[1]] == null ? "" : r[c[1]]); }).concat(r.mobile ? [String(r.mobile).slice(-10)] : []).join(" ").toLowerCase(); }
           $("#q").addEventListener("input", function (e) { q = e.target.value.trim().toLowerCase(); draw(); });
           if (v.filter) $("#f").addEventListener("change", function (e) { f = e.target.value; draw(); });
+          if (v.day) $("#d").addEventListener("change", function (e) { day = e.target.value; draw(); });
+          silent = function () { return rowsFor(v).then(guard(function (fresh) { rows = fresh; draw(); stamp(); })); }; // quiet refresh: keeps the search and filters
           $("#tbl").addEventListener("click", function (e) { var tr = e.target.closest("tr[data-i]"); if (tr && !e.target.closest("a")) openDrawer(v, shown[+tr.dataset.i], tr, draw); });
           $("#tbl").addEventListener("keydown", function (e) { var tr = e.target.closest("tr[data-i]"); if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openDrawer(v, shown[+tr.dataset.i], tr, draw); } });
-          draw();
+          draw(); stamp();
         }));
       }
       function overview() {
         return Promise.all([load("admin_cases"), load("admin_enquiries"), load("admin_payments"), load("admin_orders")]).then(guard(function (d) {
+          var ords = withAddress(d[3]);
           var cases = d[0], enq = d[1], pays = d[2], cash = d[3].reduce(function (t, o) { return t + (o.pay_status === "cod" && o.status !== "delivered" ? o.amount || 0 : 0); }, 0);
           var paid = cases.filter(function (c) { return c.consult_payment === "paid"; }).length;
           var open = cases.length - paid;
@@ -359,9 +401,18 @@
             return '<section class="block"><div class="block__head"><h2>' + title + '</h2><a href="#' + id + '">View all</a></div>' +
               (rows.length ? tableHTML(cols, rows.slice(0, 5), false) : '<p class="none pad">' + emptyText + "</p>") + "</section>";
           }
-          content.innerHTML =
+          function need(count, label, show, view) {
+            return '<a class="attn__item' + (count ? "" : " is-zero") + '" href="#' + view + "?show=" + show + '"><b>' + count + "</b><span>" + label + "</span></a>";
+          }
+          var attn = '<section class="attn" aria-labelledby="attn-h"><h2 id="attn-h">Needs attention</h2><div class="attn__row">' +
+            need(ords.filter(PRESETS.cod.test).length, "Cash on delivery to decide", "cod", "orders") +
+            need(ords.filter(PRESETS.address.test).length, "Addresses to confirm", "address", "orders") +
+            need(cases.filter(PRESETS.unpaid.test).length, "Bookings not paid", "unpaid", "bookings") +
+            need(enq.filter(PRESETS.fresh.test).length, "New enquiries", "fresh", "enquiries") + "</div></section>";
+          content.innerHTML = attn +
             '<div class="stats">' + stat("Paid bookings", paid, "Consultations paid for", "check") + stat("Not completed", open, "Started but not paid", "alert", "warn") + stat("New enquiries", fresh, "Waiting for a first reply", "enquiries", "info") + stat("Collected", rupee(money), "From paid payments", "payments") + stat("Cash to collect", rupee(cash), "Cash on delivery, not yet delivered", "payments", "warn") + "</div>" +
             '<div class="two">' + block("Latest bookings", "bookings", cases, MINI.bookings, "No bookings yet.") + block("Latest enquiries", "enquiries", enq, MINI.enquiries, "No enquiries yet.") + "</div>";
+          stamp();
         }));
       }
     }
@@ -379,8 +430,8 @@
         '<p class="qty">' + (o.quantity ? "<strong>" + esc(o.quantity) + "</strong>" : "") + "<span>Ordered " + esc(ago(o.created_at)) + "</span></p>" +
         (items ? '<ul class="ing">' + items + "</ul>" : "") +
         (o.avoid ? '<p class="alert alert--warning" role="status">' + icon("alert", 16) + "<span><strong>Do not include:</strong> " + esc(o.avoid) + "</span></p>" : "") +
-        '<div class="act">' + (BACK[o.status] ? '<button class="btn btn--quiet" type="button" data-id="' + o.id + '" data-to="' + BACK[o.status] + '">Undo</button>' : "") +
-        (NEXT[o.status] ? '<button class="btn" type="button" data-id="' + o.id + '" data-to="' + NEXT[o.status][0] + '">' + NEXT[o.status][1] + "</button>" : "") + "</div></article>";
+        '<div class="act">' + (NEXT[o.status] ? '<button class="btn" type="button" data-id="' + o.id + '" data-to="' + NEXT[o.status][0] + '">' + NEXT[o.status][1] + "</button>" : "") +
+        (BACK[o.status] ? '<button class="linkbtn" type="button" data-id="' + o.id + '" data-to="' + BACK[o.status] + '">Undo</button>' : "") + "</div></article>";
     }
     function drawBoard(msg) {
       var content = $("#content");
@@ -573,7 +624,7 @@
         '<div class="side__user"><span class="avatar" aria-hidden="true">' + esc((p.name || "?").charAt(0).toUpperCase()) + '</span><div class="who"><b>' + esc(p.name) + "</b><span>" + ROLE_LABEL[role] + "</span></div>" +
         '<button class="btn btn--quiet" id="signout" type="button">Sign out</button></div></aside>' +
         '<main class="main" id="main" tabindex="-1"><header class="head"><div><h1 id="title"></h1><p id="sub"></p></div>' +
-        '<button class="btn btn--quiet btn--icon" id="refresh" type="button" aria-label="Refresh">' + icon("refresh", 16) + "<span>Refresh</span></button></header><div id=\"content\"></div></main></div>" +
+        '<div class="head__tools"><span class="updated" id="updated"></span><button class="btn btn--quiet btn--icon" id="refresh" type="button" aria-label="Refresh">' + icon("refresh", 16) + "<span>Refresh</span></button></div></header><div id=\"content\"></div></main></div>" +
         '<div class="scrim" id="scrim" hidden></div><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden>' +
         '<header><div><h2 id="drawer-title"></h2><p id="drawer-sub"></p></div><button class="iconbtn" id="drawer-close" type="button" aria-label="Close">' + icon("close") + '</button></header><div id="drawer-body"></div></aside>';
       document.body.hidden = false;
@@ -584,8 +635,15 @@
         $("#content").addEventListener("click", function (e) { var b = e.target.closest(".order button[data-id]"); if (b) moveOrder(b.getAttribute("data-id"), b.getAttribute("data-to")); });
         setInterval(function () { // new orders show up without pressing Refresh
           if (busy || document.hidden || !$(".board, .empty")) return;
-          load("kitchen_orders").then(function (rows) { if (!busy && JSON.stringify(rows) !== JSON.stringify(orders)) { orders = rows; drawBoard(); } }).catch(function () {});
+          load("kitchen_orders").then(function (rows) { if (!busy && JSON.stringify(rows) !== JSON.stringify(orders)) { orders = rows; drawBoard(); } stamp(); }).catch(function () {});
         }, 45000);
+      } else {
+        setInterval(function () { // lists and the overview refresh every minute, unless a panel is open or the tab is hidden
+          if (document.hidden || !$("#drawer").hidden || !silent) return;
+          var a = document.activeElement;
+          if (a && a.closest && a.closest("#tbl")) return; // do not pull the row away from someone using the keyboard
+          silent().catch(function () {});
+        }, 60000);
       }
       $("#scrim").addEventListener("click", closeDrawer);
       $("#drawer-close").addEventListener("click", closeDrawer);

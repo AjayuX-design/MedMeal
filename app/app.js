@@ -100,13 +100,19 @@
     chevron: '<path d="m9 6 6 6-6 6"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
-    alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>'
+    alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
+    warn: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+    info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+    error: '<circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/>',
+    sort: '<path d="m8 9 4-4 4 4M8 15l4 4 4-4"/>',
+    sortup: '<path d="m6 15 6-6 6 6"/>',
+    sortdown: '<path d="m6 9 6 6 6-6"/>'
   };
   function icon(n, size) {
     size = size || 20;
     return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[n] + "</svg>";
   }
-  function note(type, text) { return '<p class="alert alert--' + type + '" role="' + (type === "error" ? "alert" : "status") + '">' + icon(type === "success" ? "check" : "alert", 16) + "<span>" + esc(text) + "</span></p>"; }
+  function note(type, text) { return '<p class="alert alert--' + type + '" role="' + (type === "error" ? "alert" : "status") + '">' + icon({ success: "check", error: "error", warning: "warn" }[type] || "info", 16) + "<span>" + esc(text) + "</span></p>"; }
   var DATE = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
   function date(v) { var d = new Date(v); return isNaN(d) ? String(v) : DATE.format(d); }
   function phone(v) {
@@ -308,7 +314,13 @@
     x = x || {};
     var counts = {}, last = -1, open = false, span = cols.length + (clickable ? 1 : 0);
     if (x.group) rows.forEach(function (r) { var g = x.group(r); counts[g] = (counts[g] || 0) + 1; });
-    var h = '<div class="tablewrap"><table><thead><tr>' + cols.map(function (c) { return '<th scope="col">' + esc(c[0]) + "</th>"; }).join("") +
+    var sortable = x.sortable || [], cur = x.sort;
+    function num(c) { return c[2] === "rupee" || c[1] === "age"; }
+    var h = '<div class="tablewrap"><table><thead><tr>' + cols.map(function (c) {
+      var on = cur && cur.k === c[1], cls = num(c) ? ' class="n"' : "";
+      if (sortable.indexOf(c[1]) < 0) return "<th scope=\"col\"" + cls + ">" + esc(c[0]) + "</th>";
+      return '<th scope="col"' + cls + (on ? ' aria-sort="' + (cur.dir === "asc" ? "ascending" : "descending") + '"' : "") + '><button class="sortbtn" type="button" data-k="' + c[1] + '">' + esc(c[0]) + " " + icon(on ? (cur.dir === "asc" ? "sortup" : "sortdown") : "sort", 16) + "</button></th>";
+    }).join("") +
       (clickable ? '<th scope="col" class="go"><span class="sr">Details</span></th>' : "") + "</tr></thead>";
     if (!x.group) { h += "<tbody>"; open = true; }
     rows.forEach(function (r, i) {
@@ -318,7 +330,7 @@
       }
       // The row is clickable with a mouse or finger; keyboard and screen readers use the real Details button.
       h += "<tr" + (clickable ? ' class="is-click" data-i="' + i + '"' : "") + ">" +
-        cols.map(function (c) { return "<td" + (x.mobile && x.mobile.indexOf(c[1]) < 0 ? ' class="m-hide"' : "") + ' data-label="' + esc(c[0]) + '">' + cell(c[2], r[c[1]], r) + "</td>"; }).join("") +
+        cols.map(function (c) { var k = (x.mobile && x.mobile.indexOf(c[1]) < 0 ? " m-hide" : "") + (num(c) ? " n" : ""); return "<td" + (k ? ' class="' + k.trim() + '"' : "") + ' data-label="' + esc(c[0]) + '">' + cell(c[2], r[c[1]], r) + "</td>"; }).join("") +
         (clickable ? '<td class="go"><button class="rowbtn" type="button" aria-haspopup="dialog" aria-label="Open details for ' + esc(r[titleKey] || "this row") + '"><span class="go__t">Details</span> ' + icon("chevron", 16) + "</button></td>" : "") + "</tr>";
     });
     return h + (open ? "</tbody>" : "") + "</table></div>";
@@ -383,11 +395,20 @@
       function guard(fn) { return function (x) { if (my === token) return fn(x); }; }
       function list(v) {
         return rowsFor(v).then(guard(function (rows) {
-          var q = "", f = "", day = "", pre = preset;
+          var q = "", f = "", day = "", pre = preset, sort = null;
+          // Columns you can sort by. Lists that are grouped by day keep their own order.
+          function kind(c) { return c[2] === "date" ? "date" : (c[2] === "rupee" || c[1] === "age") ? "num" : "text"; }
+          function firstDir(c) { return kind(c) === "text" ? "asc" : "desc"; }
+          var DIRS = { date: { desc: "newest first", asc: "oldest first" }, num: { desc: "high to low", asc: "low to high" }, text: { asc: "A to Z", desc: "Z to A" } };
+          var sortable = v.group ? [] : v.cols.filter(function (c) { return c[2] === "date" || c[2] === "rupee" || c[2] === "strong" || c[2] === "code" || c[1] === "age"; });
+          var sortSel = sortable.length ? '<select id="s" class="sortsel" aria-label="Sort by"><option value="">Sort: default order</option>' + sortable.map(function (c) {
+            var a = firstDir(c), b = a === "asc" ? "desc" : "asc";
+            return [a, b].map(function (d) { return '<option value="' + c[1] + ":" + d + '">' + esc(c[0]) + ", " + DIRS[kind(c)][d] + "</option>"; }).join("");
+          }).join("") + "</select>" : "";
           content.innerHTML = (pre ? '<p class="chip"><span>Showing: ' + esc(pre.label) + '</span><a href="#' + n[0] + '">Show all</a></p>' : "") +
             '<div class="toolbar"><label class="search">' + icon("search", 16) + '<input id="q" type="search" placeholder="' + esc(v.search) + '" aria-label="' + esc(v.search) + '"></label>' +
             (v.filter ? '<select id="f" aria-label="' + esc(v.filter[1]) + '"><option value="">' + esc(v.filter[1]) + "</option>" + v.filter[2].map(function (o) { return '<option value="' + o[0] + '">' + esc(o[1]) + "</option>"; }).join("") + "</select>" : "") +
-            (v.day ? '<select id="d" aria-label="Call day"><option value="">All days</option><option value="today">Today</option><option value="tomorrow">Tomorrow</option></select>' : "") +
+            (v.day ? '<select id="d" aria-label="Call day"><option value="">All days</option><option value="today">Today</option><option value="tomorrow">Tomorrow</option></select>' : "") + sortSel +
             '<span class="count" id="count" aria-live="polite"></span></div><div id="tbl"></div>';
           var shown = rows;
           function draw() {
@@ -397,19 +418,35 @@
               if (day && callGroup(r) !== (day === "today" ? 0 : 1)) return false;
               return !q || cols(r).indexOf(q) >= 0;
             });
+            if (sort) {
+              var sc = v.cols.filter(function (c) { return c[1] === sort.k; })[0], sk = kind(sc);
+              var val = function (r) { var x = r[sort.k]; return x == null || x === "" ? null : sk === "date" ? Date.parse(x) : sk === "num" ? Number(x) : String(x).toLowerCase(); };
+              shown.sort(function (a, b) { var x = val(a), y = val(b); if (x === null || y === null) return x === y ? 0 : x === null ? 1 : -1; var d = sk === "text" ? x.localeCompare(y) : x - y; return sort.dir === "asc" ? d : -d; });
+            }
             if (v.group) shown.sort(function (a, b) { var ga = v.group(a), gb = v.group(b); return ga - gb || (ga === 3 ? new Date(b.slot_at) - new Date(a.slot_at) : new Date(a.slot_at) - new Date(b.slot_at)) || 0; });
             $("#count").textContent = shown.length === rows.length ? rows.length + (rows.length === 1 ? " record" : " records") : shown.length + " of " + rows.length;
             $("#tbl").innerHTML = !rows.length ? emptyHTML(n[2], v.empty[0], v.empty[1])
               : !shown.length ? (pre && !q && !f && !day ? emptyHTML("check", "All clear", "Nothing needs attention here right now.") : day && !q && !f ? emptyHTML("check", "No calls " + day, "Nothing is booked for " + day + ".") : emptyHTML("search", "Nothing matches", "Try a different search or filter."))
-              : tableHTML(v.cols, shown, !!v.detail, v.titleKey, { mobile: v.mobile, group: v.group });
+              : tableHTML(v.cols, shown, !!v.detail, v.titleKey, { mobile: v.mobile, group: v.group, sort: sort, sortable: sortable.map(function (c) { return c[1]; }) });
+            if ($("#s")) $("#s").value = sort ? sort.k + ":" + sort.dir : "";
             scrollable();
           }
           function cols(r) { return v.cols.map(function (c) { return String(r[c[1]] == null ? "" : r[c[1]]); }).concat(r.mobile ? [String(r.mobile).slice(-10)] : []).join(" ").toLowerCase(); }
           $("#q").addEventListener("input", function (e) { q = e.target.value.trim().toLowerCase(); draw(); });
           if (v.filter) $("#f").addEventListener("change", function (e) { f = e.target.value; draw(); });
           if (v.day) $("#d").addEventListener("change", function (e) { day = e.target.value; draw(); });
+          if ($("#s")) $("#s").addEventListener("change", function (e) { var p = e.target.value.split(":"); sort = p[0] ? { k: p[0], dir: p[1] } : null; draw(); });
           silent = function () { return rowsFor(v).then(guard(function (fresh) { rows = fresh; draw(); stamp(); })); }; // quiet refresh: keeps the search and filters
-          $("#tbl").addEventListener("click", function (e) { var tr = e.target.closest("tr[data-i]"); if (tr && !e.target.closest("a")) openDrawer(v, shown[+tr.dataset.i], tr.querySelector(".rowbtn") || tr, draw); });
+          $("#tbl").addEventListener("click", function (e) {
+            var sb = e.target.closest(".sortbtn");
+            if (sb) { // 1st click: the useful direction, 2nd: the other way, 3rd: back to the default order
+              var k = sb.getAttribute("data-k"), c = v.cols.filter(function (x) { return x[1] === k; })[0], first = firstDir(c);
+              sort = !sort || sort.k !== k ? { k: k, dir: first } : sort.dir === first ? { k: k, dir: first === "asc" ? "desc" : "asc" } : null;
+              draw(); var again = $('.sortbtn[data-k="' + k + '"]'); if (again) again.focus();
+              return;
+            }
+            var tr = e.target.closest("tr[data-i]"); if (tr && !e.target.closest("a")) openDrawer(v, shown[+tr.dataset.i], tr.querySelector(".rowbtn") || tr, draw);
+          });
           draw(); stamp();
         }));
       }
@@ -454,7 +491,7 @@
       return '<article class="order"><header><b>' + esc(o.patient_name) + '</b><span class="code">' + esc(o.order_no) + "</span></header>" +
         '<p class="qty">' + (o.quantity ? "<strong>" + esc(o.quantity) + "</strong>" : "") + "<span>Ordered " + esc(ago(o.created_at)) + "</span></p>" +
         (items ? '<ul class="ing">' + items + "</ul>" : "") +
-        (o.avoid ? '<p class="alert alert--warning" role="status">' + icon("alert", 16) + "<span><strong>Do not include:</strong> " + esc(o.avoid) + "</span></p>" : "") +
+        (o.avoid ? '<p class="alert alert--warning" role="status">' + icon("warn", 16) + "<span><strong>Do not include:</strong> " + esc(o.avoid) + "</span></p>" : "") +
         '<div class="act">' + (NEXT[o.status] ? '<button class="btn" type="button" data-id="' + o.id + '" data-to="' + NEXT[o.status][0] + '">' + NEXT[o.status][1] + "</button>" : "") +
         (BACK[o.status] ? '<button class="linkbtn" type="button" data-id="' + o.id + '" data-to="' + BACK[o.status] + '">Undo</button>' : "") + "</div></article>";
     }
@@ -648,7 +685,7 @@
       if (p.role !== role) return location.replace(SCREEN[p.role]);
       profileRow = p;
       $("#app").innerHTML =
-        '<a class="skip-link" href="#main">Skip to content</a><div class="shell"><aside class="side"><div class="side__top"><img src="/favicon-32.png" width="32" height="32" alt=""><span class="brand">MedMeal</span></div>' +
+        '<a class="skip-link" href="#main">Skip to content</a><div class="shell' + (nav.length < 2 ? " no-tabs" : "") + '"><aside class="side"><div class="side__top"><img src="/favicon-32.png" width="32" height="32" alt=""><span class="brand">MedMeal</span></div>' +
         '<nav class="nav" aria-label="Main">' + nav.map(function (n) { return '<a href="#' + n[0] + '">' + icon(n[2]) + "<span>" + n[1] + "</span></a>"; }).join("") + "</nav>" +
         '<div class="side__user"><span class="avatar" aria-hidden="true">' + esc((p.name || "?").charAt(0).toUpperCase()) + '</span><div class="who"><b>' + esc(p.name) + "</b><span>" + ROLE_LABEL[role] + "</span></div>" +
         '<button class="btn btn--quiet" id="signout" type="button">Sign out</button></div></aside>' +

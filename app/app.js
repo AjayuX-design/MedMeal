@@ -269,10 +269,10 @@
   }
 
   // ---------------------------------------------------------------- Pieces
-  function tableHTML(cols, rows, clickable) {
+  function tableHTML(cols, rows, clickable, titleKey) {
     var h = '<div class="tablewrap"><table><thead><tr>' + cols.map(function (c) { return '<th scope="col">' + esc(c[0]) + "</th>"; }).join("") + "</tr></thead><tbody>";
     rows.forEach(function (r, i) {
-      h += "<tr" + (clickable ? ' class="is-click" tabindex="0" data-i="' + i + '"' : "") + ">" +
+      h += "<tr" + (clickable ? ' class="is-click" tabindex="0" aria-haspopup="dialog" aria-label="Open details for ' + esc(r[titleKey] || "this row") + '" data-i="' + i + '"' : "") + ">" +
         cols.map(function (c) { return '<td data-label="' + esc(c[0]) + '">' + cell(c[2], r[c[1]], r) + "</td>"; }).join("") + "</tr>";
     });
     return h + "</tbody></table></div>";
@@ -337,7 +337,7 @@
             $("#count").textContent = shown.length === rows.length ? rows.length + (rows.length === 1 ? " record" : " records") : shown.length + " of " + rows.length;
             $("#tbl").innerHTML = !rows.length ? emptyHTML(n[2], v.empty[0], v.empty[1])
               : !shown.length ? emptyHTML("search", "Nothing matches", "Try a different search or filter.")
-              : tableHTML(v.cols, shown, !!v.detail);
+              : tableHTML(v.cols, shown, !!v.detail, v.titleKey);
           }
           function cols(r) { return v.cols.map(function (c) { return String(r[c[1]] == null ? "" : r[c[1]]); }).concat(r.mobile ? [String(r.mobile).slice(-10)] : []).join(" ").toLowerCase(); }
           $("#q").addEventListener("input", function (e) { q = e.target.value.trim().toLowerCase(); draw(); });
@@ -424,6 +424,7 @@
       if (v.addressTools) showAddressTools(row, redraw);
       if (v.callStatus) showCallStatus(row, redraw);
       if (v.reports) showReports(row);
+      $(".shell").inert = true; // the page behind stays out of reach while the panel is open
       $("#scrim").hidden = false; d.hidden = false;
       $("#drawer-close").focus();
     }
@@ -556,6 +557,7 @@
     function closeDrawer() {
       if ($("#drawer").hidden) return;
       $("#drawer").hidden = true; $("#scrim").hidden = true;
+      $(".shell").inert = false;
       if (opener && document.contains(opener)) opener.focus();
     }
 
@@ -566,17 +568,18 @@
       if (p.role !== role) return location.replace(SCREEN[p.role]);
       profileRow = p;
       $("#app").innerHTML =
-        '<div class="shell"><aside class="side"><div class="side__top"><img src="/favicon-32.png" width="32" height="32" alt=""><span class="brand">MedMeal</span></div>' +
+        '<a class="skip-link" href="#main">Skip to content</a><div class="shell"><aside class="side"><div class="side__top"><img src="/favicon-32.png" width="32" height="32" alt=""><span class="brand">MedMeal</span></div>' +
         '<nav class="nav" aria-label="Main">' + nav.map(function (n) { return '<a href="#' + n[0] + '">' + icon(n[2]) + "<span>" + n[1] + "</span></a>"; }).join("") + "</nav>" +
         '<div class="side__user"><span class="avatar" aria-hidden="true">' + esc((p.name || "?").charAt(0).toUpperCase()) + '</span><div class="who"><b>' + esc(p.name) + "</b><span>" + ROLE_LABEL[role] + "</span></div>" +
         '<button class="btn btn--quiet" id="signout" type="button">Sign out</button></div></aside>' +
-        '<main class="main"><header class="head"><div><h1 id="title"></h1><p id="sub"></p></div>' +
+        '<main class="main" id="main" tabindex="-1"><header class="head"><div><h1 id="title"></h1><p id="sub"></p></div>' +
         '<button class="btn btn--quiet btn--icon" id="refresh" type="button" aria-label="Refresh">' + icon("refresh", 16) + "<span>Refresh</span></button></header><div id=\"content\"></div></main></div>" +
         '<div class="scrim" id="scrim" hidden></div><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden>' +
         '<header><div><h2 id="drawer-title"></h2><p id="drawer-sub"></p></div><button class="iconbtn" id="drawer-close" type="button" aria-label="Close">' + icon("close") + '</button></header><div id="drawer-body"></div></aside>';
       document.body.hidden = false;
       $("#signout").addEventListener("click", function () { client.auth.signOut().then(function () { location.replace("/app/"); }); });
       $("#refresh").addEventListener("click", route);
+      $(".skip-link").addEventListener("click", function (e) { e.preventDefault(); $("#main").focus(); }); // not a #link: the page uses the hash to pick a screen
       if (role === "kitchen") {
         $("#content").addEventListener("click", function (e) { var b = e.target.closest(".order button[data-id]"); if (b) moveOrder(b.getAttribute("data-id"), b.getAttribute("data-to")); });
         setInterval(function () { // new orders show up without pressing Refresh
@@ -586,7 +589,15 @@
       }
       $("#scrim").addEventListener("click", closeDrawer);
       $("#drawer-close").addEventListener("click", closeDrawer);
-      document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeDrawer(); });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") return closeDrawer();
+        if (e.key !== "Tab" || $("#drawer").hidden) return;
+        var f = Array.prototype.filter.call($("#drawer").querySelectorAll("button, a[href], input, select, textarea"), function (x) { return !x.disabled && x.offsetParent !== null; });
+        if (!f.length) return;
+        var first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      });
       window.addEventListener("hashchange", route);
       route();
     }).catch(function () { location.replace("/app/"); });

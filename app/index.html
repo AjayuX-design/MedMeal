@@ -32,7 +32,7 @@
     <div class="login">
       <h2>Welcome back</h2>
       <p class="login__sub">Choose your role, then sign in.</p>
-      <p class="msg" id="msg" role="alert"></p>
+      <p class="msg" id="msg" role="alert" tabindex="-1"></p>
       <form id="login-form" novalidate>
         <fieldset class="roles">
           <legend>I am the</legend>
@@ -40,9 +40,9 @@
           <label class="role"><input type="radio" name="role" value="kitchen"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>Kitchen</span></label>
           <label class="role"><input type="radio" name="role" value="admin"><span><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.4 8.4 8 9 4.6-.6 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg>Admin</span></label>
         </fieldset>
-        <label class="field"><span>Email</span><input id="email" type="email" autocomplete="username" required></label>
+        <label class="field"><span>Email</span><input id="email" type="email" autocomplete="username" aria-describedby="msg" required></label>
         <label class="field"><span>Password</span>
-          <span class="pw"><input id="password" type="password" autocomplete="current-password" required><button class="pw__toggle" id="pw-toggle" type="button" aria-pressed="false">Show</button></span>
+          <span class="pw"><input id="password" type="password" autocomplete="current-password" aria-describedby="msg" required><button class="pw__toggle" id="pw-toggle" type="button" aria-label="Show password" aria-controls="password">Show</button></span>
         </label>
         <button class="btn btn--block" id="login-btn" type="submit">Sign in</button>
       </form>

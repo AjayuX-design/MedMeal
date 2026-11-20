@@ -24,7 +24,14 @@
   }
   // Every staff action goes to one place: POST /api/staff with the action name.
   function act(action, body) { return post("/api/staff", Object.assign({ action: action }, body)); }
-  function fail(text) { var m = $("#msg"); if (!m) return; m.textContent = text; m.classList.add("is-shown"); }
+  // Shows the message in the always-present alert box and moves focus to the thing to fix (or to the message).
+  function fail(text, el) {
+    var m = $("#msg"); if (!m) return;
+    m.textContent = text; m.classList.add("is-shown");
+    [$("#email"), $("#password")].forEach(function (i) { i.removeAttribute("aria-invalid"); });
+    if (el && el.setAttribute && el.tagName === "INPUT" && el.type !== "radio") el.setAttribute("aria-invalid", "true");
+    (el || m).focus();
+  }
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
   }
@@ -41,7 +48,7 @@
       var show = $("#password").type === "password";
       $("#password").type = show ? "text" : "password";
       this.textContent = show ? "Hide" : "Show";
-      this.setAttribute("aria-pressed", show);
+      this.setAttribute("aria-label", show ? "Hide password" : "Show password");
     });
 
     // Pre-pick the role this device used last (or ?role=kitchen in the link).
@@ -52,11 +59,11 @@
 
     $("#login-form").addEventListener("submit", function (e) {
       e.preventDefault();
-      var btn = $("#login-btn"); $("#msg").classList.remove("is-shown");
+      var btn = $("#login-btn"), msgBox = $("#msg"); msgBox.classList.remove("is-shown"); msgBox.textContent = "";
       function busy(on) { btn.disabled = on; btn.textContent = on ? "Signing in..." : "Sign in"; btn.setAttribute("aria-busy", on); }
       if (!client) return fail("Sign in is not set up yet. Please ask Pixxel Nesst.");
       var picked = document.querySelector("input[name=role]:checked");
-      if (!picked) return fail("Please choose your role first.");
+      if (!picked) return fail("Please choose your role first.", document.querySelector("input[name=role]"));
       busy(true);
       client.auth.signInWithPassword({ email: $("#email").value.trim(), password: $("#password").value }).then(function (r) {
         if (r.error) throw new Error(r.error.status === 400 || r.error.status === 422 ? "bad login" : "network");
@@ -70,10 +77,12 @@
         busy(false);
         client.auth.signOut();
         var m = String(err.message);
+        var wrong = m.indexOf("wrong role:") === 0, bad = !(m === "no role" || m === "network" || err instanceof TypeError || wrong);
         fail(m === "no role" ? "This account has no role yet. Please ask the admin."
           : m === "network" || err instanceof TypeError ? "Could not reach the sign in service. Check your connection and try again. If it keeps happening, tell Pixxel Nesst."
-          : m.indexOf("wrong role:") === 0 ? "This is a " + m.slice(11) + " account. Please choose " + m.slice(11) + " above."
-          : "The email or password is not right. Please try again.");
+          : wrong ? "This is a " + m.slice(11) + " account. Please choose " + m.slice(11) + " above."
+          : "The email or password is not right. Please try again.",
+          wrong ? document.querySelector("input[name=role]:checked") : bad ? $("#password") : null);
       });
     });
   }
@@ -88,6 +97,7 @@
     orders: '<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/>',
     refresh: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
     close: '<path d="M18 6 6 18M6 6l12 12"/>',
+    chevron: '<path d="m9 6 6 6-6 6"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
     alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>'
@@ -177,16 +187,16 @@
     // Dietitian
     dietitian_bookings: {
       title: "Bookings", sub: "Paid consultations. Open a booking to see the health details.", source: "dietitian_cases", titleKey: "patient_name",
-      search: "Search by name, case number or mobile",
+      search: "Search name, case or mobile",
       cols: [["Case", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Feeding route", "feeding_route"], ["Mobile", "mobile", "phone"], ["Call", "call_type", "call"], ["Call time", "slot_at", "date"], ["Call status", "call_status", "call_st"]],
-      filter: ["call_status", "All call statuses", [["new", "New"], ["called", "Called"], ["closed", "Closed"]]],
+      filter: ["call_status", "All statuses", [["new", "New"], ["called", "Called"], ["closed", "Closed"]]],
       group: callGroup, day: true, mobile: ["patient_name", "slot_at", "call_type", "call_status"],
       detail: BOOKING_DETAIL, hero: BOOKING_HERO, subKey: "case_no", reports: true, callStatus: true, empty: ["No paid bookings yet", "When a family pays for a consultation, the booking appears here."]
     },
     // Admin
     bookings: {
       title: "Bookings", sub: "Everyone who started a booking, paid or not.", source: "admin_cases", titleKey: "patient_name",
-      search: "Search by name, case number or mobile",
+      search: "Search name, case or mobile",
       cols: [["Case", "case_no", "code"], ["Patient", "patient_name", "strong"], ["Age", "age"], ["Mobile", "mobile", "phone"], ["Call", "call_type", "call"], ["Call time", "slot_at", "date"], ["Amount", "consult_amount", "rupee"], ["Payment", "consult_payment", "pay"], ["Call status", "call_status", "call_st"]],
       filter: ["consult_payment", "All payments", [["paid", "Paid"], ["not_completed", "Not completed"]]],
       mobile: ["patient_name", "slot_at", "consult_payment", "call_status"],
@@ -196,7 +206,7 @@
     },
     enquiries: {
       title: "Enquiries", sub: "Contact form, hospital enquiries and 'Not sure yet' requests.", source: "admin_enquiries", titleKey: "name",
-      search: "Search by name, organisation or mobile",
+      search: "Search name, org or mobile",
       cols: [["Reference", "ref", "code"], ["Type", "kind", "kind"], ["Name", "name", "strong"], ["Organisation", "org"], ["Mobile", "mobile", "phone"], ["Message", "message", "clip"], ["Progress", "progress", "progress"], ["Received", "created_at", "date"]],
       filter: ["progress", "All progress", [["new", "New"], ["contacted", "Contacted"], ["sent_to_dietitian", "Sent to dietitian"]]],
       mobile: ["name", "kind", "progress", "created_at"],
@@ -206,7 +216,7 @@
     },
     payments: {
       title: "Payments", sub: "Every payment attempt and what happened to it.", source: "admin_payments", titleKey: "case_no",
-      search: "Search by case number or patient",
+      search: "Search case or patient",
       cols: [["Case", "case_no", "code"], ["Patient", "patient_name", "strong"], ["For", "kind", "pkind"], ["Amount", "amount", "rupee"], ["Status", "status", "pstat"], ["Started", "created_at", "date"], ["Paid", "paid_at", "date"]],
       filter: ["status", "All statuses", [["paid", "Paid"], ["created", "Started"], ["failed", "Failed"]]],
       mobile: ["patient_name", "amount", "status", "created_at"],
@@ -220,7 +230,7 @@
     },
     dietitian_orders: {
       title: "Orders", sub: "Feed orders. Confirm the delivery address once the family has sent it.", source: "dietitian_orders", titleKey: "patient_name", subKey: "order_no",
-      search: "Search by order, case number or patient",
+      search: "Search order, case or patient",
       cols: [["Order", "order_no", "code"], ["Patient", "patient_name", "strong"], ["Status", "status", "ostat"], ["Payment", "pay_view", "paystat"], ["Address", "addr_status", "astat"], ["Updated", "updated_at", "date"]],
       filter: ["addr_status", "All addresses", [["none", "Not received"], ["submitted", "To confirm"], ["confirmed", "Confirmed"]]],
       mobile: ["patient_name", "status", "pay_view", "addr_status"],
@@ -230,7 +240,7 @@
     orders: {
       title: "Orders", sub: "Where every feed order is, and its delivery address.", source: "admin_orders", titleKey: "patient_name", subKey: "order_no",
       detail: ORDER_DETAIL, hero: { badges: [["status", "ostat"], ["pay_view", "paystat"], ["addr_status", "astat"]] }, addressTools: true, orderTools: true,
-      search: "Search by order, case number or patient",
+      search: "Search order, case or patient",
       cols: [["Order", "order_no", "code"], ["Patient", "patient_name", "strong"], ["Status", "status", "ostat"], ["Payment", "pay_view", "paystat"], ["Address", "addr_status", "astat"], ["Updated", "updated_at", "date"]],
       filter: ["status", "All statuses", [["new", "Waiting"], ["preparing", "Preparing"], ["prepared", "Prepared"], ["packed", "Packed"], ["delivered", "Delivered"]]],
       mobile: ["patient_name", "status", "pay_view", "addr_status"],
@@ -296,21 +306,36 @@
   // x.mobile: the only columns kept in the phone cards. x.group: a function that puts rows under headings.
   function tableHTML(cols, rows, clickable, titleKey, x) {
     x = x || {};
-    var counts = {}, last = -1;
+    var counts = {}, last = -1, open = false, span = cols.length + (clickable ? 1 : 0);
     if (x.group) rows.forEach(function (r) { var g = x.group(r); counts[g] = (counts[g] || 0) + 1; });
-    var h = '<div class="tablewrap"><table><thead><tr>' + cols.map(function (c) { return '<th scope="col">' + esc(c[0]) + "</th>"; }).join("") + "</tr></thead><tbody>";
+    var h = '<div class="tablewrap"><table><thead><tr>' + cols.map(function (c) { return '<th scope="col">' + esc(c[0]) + "</th>"; }).join("") +
+      (clickable ? '<th scope="col" class="go"><span class="sr">Details</span></th>' : "") + "</tr></thead>";
+    if (!x.group) { h += "<tbody>"; open = true; }
     rows.forEach(function (r, i) {
-      if (x.group) { var g = x.group(r); if (g !== last) { last = g; h += '<tr class="grp"><th scope="colgroup" colspan="' + cols.length + '">' + GROUPS[g] + " <span>" + counts[g] + "</span></th></tr>"; } }
-      h += "<tr" + (clickable ? ' class="is-click" tabindex="0" aria-haspopup="dialog" aria-label="Open details for ' + esc(r[titleKey] || "this row") + '" data-i="' + i + '"' : "") + ">" +
-        cols.map(function (c) { return "<td" + (x.mobile && x.mobile.indexOf(c[1]) < 0 ? ' class="m-hide"' : "") + ' data-label="' + esc(c[0]) + '">' + cell(c[2], r[c[1]], r) + "</td>"; }).join("") + "</tr>";
+      if (x.group) {
+        var g = x.group(r);
+        if (g !== last) { last = g; h += (open ? "</tbody>" : "") + '<tbody><tr class="grp"><th scope="rowgroup" colspan="' + span + '">' + GROUPS[g] + " <span>" + counts[g] + "</span></th></tr>"; open = true; }
+      }
+      // The row is clickable with a mouse or finger; keyboard and screen readers use the real Details button.
+      h += "<tr" + (clickable ? ' class="is-click" data-i="' + i + '"' : "") + ">" +
+        cols.map(function (c) { return "<td" + (x.mobile && x.mobile.indexOf(c[1]) < 0 ? ' class="m-hide"' : "") + ' data-label="' + esc(c[0]) + '">' + cell(c[2], r[c[1]], r) + "</td>"; }).join("") +
+        (clickable ? '<td class="go"><button class="rowbtn" type="button" aria-haspopup="dialog" aria-label="Open details for ' + esc(r[titleKey] || "this row") + '"><span class="go__t">Details</span> ' + icon("chevron", 16) + "</button></td>" : "") + "</tr>";
     });
-    return h + "</tbody></table></div>";
+    return h + (open ? "</tbody>" : "") + "</table></div>";
+  }
+  // A table that scrolls sideways with nothing inside to tab to gets its own tab stop, so a keyboard can scroll it.
+  function scrollable() {
+    document.querySelectorAll(".tablewrap").forEach(function (w) {
+      var on = w.scrollWidth > w.clientWidth + 1 && !w.querySelector("button, a[href]");
+      if (on) { w.setAttribute("tabindex", "0"); w.setAttribute("role", "region"); w.setAttribute("aria-label", ($("#title").textContent || "Data") + " table, scrolls sideways"); }
+      else { w.removeAttribute("tabindex"); w.removeAttribute("role"); w.removeAttribute("aria-label"); }
+    });
   }
   function emptyHTML(ic, title, text) {
     return '<div class="empty"><span class="empty__icon">' + icon(ic, 24) + "</span><h2>" + esc(title) + "</h2><p>" + esc(text) + "</p></div>";
   }
   function skeleton() {
-    return '<div class="skel" aria-busy="true" aria-label="Loading"><i></i><i></i><i></i><i></i><i></i></div>';
+    return '<div class="skel" role="status" aria-busy="true"><span class="sr">Loading</span><i></i><i></i><i></i><i></i><i></i></div>';
   }
 
   // ---------------------------------------------------------------- Role screens
@@ -377,14 +402,14 @@
             $("#tbl").innerHTML = !rows.length ? emptyHTML(n[2], v.empty[0], v.empty[1])
               : !shown.length ? (pre && !q && !f && !day ? emptyHTML("check", "All clear", "Nothing needs attention here right now.") : day && !q && !f ? emptyHTML("check", "No calls " + day, "Nothing is booked for " + day + ".") : emptyHTML("search", "Nothing matches", "Try a different search or filter."))
               : tableHTML(v.cols, shown, !!v.detail, v.titleKey, { mobile: v.mobile, group: v.group });
+            scrollable();
           }
           function cols(r) { return v.cols.map(function (c) { return String(r[c[1]] == null ? "" : r[c[1]]); }).concat(r.mobile ? [String(r.mobile).slice(-10)] : []).join(" ").toLowerCase(); }
           $("#q").addEventListener("input", function (e) { q = e.target.value.trim().toLowerCase(); draw(); });
           if (v.filter) $("#f").addEventListener("change", function (e) { f = e.target.value; draw(); });
           if (v.day) $("#d").addEventListener("change", function (e) { day = e.target.value; draw(); });
           silent = function () { return rowsFor(v).then(guard(function (fresh) { rows = fresh; draw(); stamp(); })); }; // quiet refresh: keeps the search and filters
-          $("#tbl").addEventListener("click", function (e) { var tr = e.target.closest("tr[data-i]"); if (tr && !e.target.closest("a")) openDrawer(v, shown[+tr.dataset.i], tr, draw); });
-          $("#tbl").addEventListener("keydown", function (e) { var tr = e.target.closest("tr[data-i]"); if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openDrawer(v, shown[+tr.dataset.i], tr, draw); } });
+          $("#tbl").addEventListener("click", function (e) { var tr = e.target.closest("tr[data-i]"); if (tr && !e.target.closest("a")) openDrawer(v, shown[+tr.dataset.i], tr.querySelector(".rowbtn") || tr, draw); });
           draw(); stamp();
         }));
       }
@@ -412,7 +437,7 @@
           content.innerHTML = attn +
             '<div class="stats">' + stat("Paid bookings", paid, "Consultations paid for", "check") + stat("Not completed", open, "Started but not paid", "alert", "warn") + stat("New enquiries", fresh, "Waiting for a first reply", "enquiries", "info") + stat("Collected", rupee(money), "From paid payments", "payments") + stat("Cash to collect", rupee(cash), "Cash on delivery, not yet delivered", "payments", "warn") + "</div>" +
             '<div class="two">' + block("Latest bookings", "bookings", cases, MINI.bookings, "No bookings yet.") + block("Latest enquiries", "enquiries", enq, MINI.enquiries, "No enquiries yet.") + "</div>";
-          stamp();
+          scrollable(); stamp();
         }));
       }
     }
@@ -467,10 +492,14 @@
         hero = '<div class="hero"><div class="hero__badges">' + h.badges.map(function (x) { return cell(x[1], row[x[0]], row); }).join("") + "</div>" +
           (h.time && row[h.time] ? '<p class="hero__line"><strong>' + esc(DATE_LONG.format(new Date(row[h.time]))) + "</strong><span>" + cell("call", row[h.type], row) + "</span></p>" : "") + "</div>";
       }
-      $("#drawer-body").innerHTML = hero + '<dl class="kv">' + v.detail.map(function (x) {
-        if (x[0] === "#") return '<h3 class="kv__h">' + esc(x[1]) + "</h3>";
-        return '<div class="' + (x[2] === "long" ? "kv__wide" : "") + '"><dt>' + esc(x[0]) + '</dt><dd data-k="' + x[1] + '">' + cell(x[2], row[x[1]], row) + "</dd></div>";
-      }).join("") + "</dl>";
+      // Each "#" entry is a heading, and a heading cannot sit inside a <dl>, so every section gets its own <dl>.
+      var body = "", inList = false;
+      v.detail.forEach(function (x) {
+        if (x[0] === "#") { body += (inList ? "</dl>" : "") + '<h3 class="kv__h">' + esc(x[1]) + '</h3><dl class="kv">'; inList = true; return; }
+        if (!inList) { body += '<dl class="kv">'; inList = true; }
+        body += '<div class="' + (x[2] === "long" ? "kv__wide" : "") + '"><dt>' + esc(x[0]) + '</dt><dd data-k="' + x[1] + '">' + cell(x[2], row[x[1]], row) + "</dd></div>";
+      });
+      $("#drawer-body").innerHTML = hero + body + (inList ? "</dl>" : "");
       if (v.orderTools && role === "admin") showOrderActions(v, row, redraw);
       if (v.addressTools) showAddressTools(row, redraw);
       if (v.callStatus) showCallStatus(row, redraw);
@@ -623,7 +652,7 @@
         '<nav class="nav" aria-label="Main">' + nav.map(function (n) { return '<a href="#' + n[0] + '">' + icon(n[2]) + "<span>" + n[1] + "</span></a>"; }).join("") + "</nav>" +
         '<div class="side__user"><span class="avatar" aria-hidden="true">' + esc((p.name || "?").charAt(0).toUpperCase()) + '</span><div class="who"><b>' + esc(p.name) + "</b><span>" + ROLE_LABEL[role] + "</span></div>" +
         '<button class="btn btn--quiet" id="signout" type="button">Sign out</button></div></aside>' +
-        '<main class="main" id="main" tabindex="-1"><header class="head"><div><h1 id="title"></h1><p id="sub"></p></div>' +
+        '<main class="main" id="main" tabindex="-1"><header class="head"><div><h1 id="title" tabindex="-1"></h1><p id="sub"></p></div>' +
         '<div class="head__tools"><span class="updated" id="updated"></span><button class="btn btn--quiet btn--icon" id="refresh" type="button" aria-label="Refresh">' + icon("refresh", 16) + "<span>Refresh</span></button></div></header><div id=\"content\"></div></main></div>" +
         '<div class="scrim" id="scrim" hidden></div><aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden>' +
         '<header><div><h2 id="drawer-title"></h2><p id="drawer-sub"></p></div><button class="iconbtn" id="drawer-close" type="button" aria-label="Close">' + icon("close") + '</button></header><div id="drawer-body"></div></aside>';
@@ -656,7 +685,9 @@
         if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
         else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       });
-      window.addEventListener("hashchange", route);
+      // After a menu click, put focus on the new page title so a screen reader announces the change.
+      window.addEventListener("hashchange", function () { route(); $("#title").focus({ preventScroll: true }); });
+      window.addEventListener("resize", scrollable);
       route();
     }).catch(function () { location.replace("/app/"); });
   }
